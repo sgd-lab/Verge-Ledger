@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vergeledger.org/schemas/indicator-species.schema.json",
+  "title": "IndicatorSpeciesDataset",
+  "description": "Curated botanical indicator species dataset for Verge Ledger road verge triage",
+  "type": "array",
+  "minItems": 20,
+  "maxItems": 40,
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "commonName",
+      "scientificName",
+      "group",
+      "weight",
+      "sensitive",
+      "notes",
+      "sourceUrl",
+      "sourceRetrievedAt",
+      "reviewStatus"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$",
+        "description": "Unique kebab-case species identifier"
+      },
+      "commonName": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Standard English vernacular plant name"
+      },
+      "scientificName": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Binomial scientific botanical name (BSBI standard)"
+      },
+      "group": {
+        "type": "string",
+        "enum": [
+          "forb",
+          "legume",
+          "orchid",
+          "semi_parasite",
+          "grass_indicator",
+          "nutrient_enrichment"
+        ],
+        "description": "Ecological functional group"
+      },
+      "weight": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 3,
+        "description": "Triage indicative weight: 1-3 for positive indicators, 0 for nutrient dominants"
+      },
+      "sensitive": {
+        "type": "boolean",
+        "description": "Flag indicating species vulnerable to illegal poaching or collection (e.g. wild orchids)"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Field identification notes, habitat context, and roadside visibility guidance"
+      },
+      "sourceUrl": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://",
+        "description": "Authoritative primary botanical source URL (BSBI Plant Atlas 2020 or Plantlife)"
+      },
+      "sourceRetrievedAt": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z)?$",
+        "description": "ISO 8601 date of source record verification"
+      },
+      "reviewStatus": {
+        "type": "string",
+        "enum": ["needs_expert_review", "reviewed"],
+        "description": "Ecological peer-review calibration status"
+      }
+    }
+  }
+}
