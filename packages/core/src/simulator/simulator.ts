@@ -143,7 +143,6 @@ export function simulateCutDrop(params: SimulationParams): SimulationResult {
     return {
       status: 'no_valid_options',
       options: evaluatedOptions,
-      indicativeSavings: savings,
       summaryMessage: 'no option meets guidance; consider alternatives',
       safetyDisclaimer: SIMULATOR_DISCLAIMER,
     };
@@ -152,7 +151,6 @@ export function simulateCutDrop(params: SimulationParams): SimulationResult {
   return {
     status: 'success',
     options: evaluatedOptions,
-    indicativeSavings: savings,
     summaryMessage: 'Options evaluated successfully against guidance.',
     safetyDisclaimer: SIMULATOR_DISCLAIMER,
   };

@@ -203,8 +203,8 @@ describe('Which-Cut-To-Drop Scenario Simulator', () => {
         cutsToRemove: 1,
         costInputs: { vergeLengthKm: 10, costPerCutPerKm: 150 },
       });
-      expect(costOnly.indicativeSavings?.costSavedGbp).toBe(1500);
-      expect(costOnly.indicativeSavings?.fuelSavedLitres).toBeUndefined();
+      expect(costOnly.options[0]?.savings?.costSavedGbp).toBe(1500);
+      expect(costOnly.options[0]?.savings?.fuelSavedLitres).toBeUndefined();
 
       const fuelOnly = simulateCutDrop({
         currentCuts: [
@@ -216,8 +216,8 @@ describe('Which-Cut-To-Drop Scenario Simulator', () => {
         cutsToRemove: 1,
         costInputs: { kmOfRoad: 10, fuelLitersPerCutPerKm: 25 },
       });
-      expect(fuelOnly.indicativeSavings?.costSavedGbp).toBeUndefined();
-      expect(fuelOnly.indicativeSavings?.fuelSavedLitres).toBe(250);
+      expect(fuelOnly.options[0]?.savings?.costSavedGbp).toBeUndefined();
+      expect(fuelOnly.options[0]?.savings?.fuelSavedLitres).toBe(250);
 
       // Boundary tests for getCombinations
       expect(getCombinations([1, 2], 0)).toEqual([]);
