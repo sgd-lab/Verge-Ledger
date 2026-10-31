@@ -1,4 +1,15 @@
-import { CORE_VERSION } from '@verge-ledger/core';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { App } from './App';
+import './index.css';
 
-export const APP_NAME = 'Verge Ledger';
-export const VERSION = CORE_VERSION;
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
+
+ReactDOM.createRoot(rootElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
