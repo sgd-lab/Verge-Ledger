@@ -1,0 +1,7 @@
+{
+  "name": "verge-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evidence and cut-timing tools for road verges. Offline-first. For parish councils and volunteers in England.",
+  "license": "MIT"
+}
