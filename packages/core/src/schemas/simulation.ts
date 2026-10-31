@@ -16,15 +16,27 @@ export const SimulationCostInputsSchema = z
     costPerCutPerKm: z.number().positive().optional(),
     fuelLitersPerCutPerKm: z.number().positive().optional(),
     kmOfRoad: z.number().positive().optional(),
+    vergeLengthKm: z.number().positive().optional(),
   })
   .strict();
 
 export type SimulationCostInputs = z.infer<typeof SimulationCostInputsSchema>;
 
+export const SimulatorTierEnum = z.enum([
+  'ordinary',
+  'promising',
+  'expert_review',
+  'Ordinary verge',
+  'Promising verge',
+  'Refer for expert review',
+  'unknown',
+]);
+export type SimulatorTier = z.infer<typeof SimulatorTierEnum>;
+
 export const SimulationParamsSchema = z
   .object({
     currentCuts: z.array(CutItemSchema).min(1),
-    tier: z.enum(['ordinary', 'promising', 'expert_review', 'unknown']),
+    tier: SimulatorTierEnum,
     cuttingsRemovable: z.enum(['yes', 'no', 'unknown']),
     cutsToRemove: z.number().int().min(1).max(10),
     costInputs: SimulationCostInputsSchema.optional(),
