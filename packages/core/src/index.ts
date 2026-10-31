@@ -15,3 +15,4 @@ export * from './scoring/index.js';
 export * from './advisor/index.js';
 export * from './simulator/index.js';
 export * from './foi/index.js';
+export * from './geometry/index.js';
