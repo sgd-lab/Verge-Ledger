@@ -14,3 +14,4 @@ export * from './schemas/index.js';
 export * from './scoring/index.js';
 export * from './advisor/index.js';
 export * from './simulator/index.js';
+export * from './foi/index.js';
