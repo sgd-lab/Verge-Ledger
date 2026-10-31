@@ -5,11 +5,12 @@ Describe the goal and technical changes introduced in this pull request.
 ## Requirement IDs Addressed
 
 List the requirement IDs from `docs/01-prd.md` implemented or tested (e.g., `SUR-1`, `SCO-2`, `ADV-4`, `REQ-1`, `DEM-1`):
-- 
+-
 
 ## Verification & Tests Added
 
 Describe the automated tests added or updated:
+
 - [ ] Unit / property tests in `packages/core`
 - [ ] Schema validation in `packages/data`
 - [ ] Component / UI tests in `apps/web`

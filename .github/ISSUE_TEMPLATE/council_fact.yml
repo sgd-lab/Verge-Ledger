@@ -1,7 +1,7 @@
 name: Council Fact Proposal
 description: Propose a verified highway verge mowing policy or fact for an English council
-title: "[Council Fact]: "
-labels: ["council-registry", "data"]
+title: '[Council Fact]: '
+labels: ['council-registry', 'data']
 body:
   - type: markdown
     attributes:

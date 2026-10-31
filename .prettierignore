@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+coverage/
+.agents/
+package-lock.json
+*.log
+.tmp/
+playwright-report/
+test-results/
+.husky/

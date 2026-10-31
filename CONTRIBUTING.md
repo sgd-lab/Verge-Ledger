@@ -43,6 +43,7 @@ Format: `<type>(<scope>): <summary>` (imperative mood, 72 characters or fewer)
 Allowed types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`, `build`.
 
 Examples:
+
 - `feat(core): add refuge overlay to advisor`
 - `fix(web): ensure touch target size >= 44px on survey button`
 - `docs(data): add source citation for common knapweed`

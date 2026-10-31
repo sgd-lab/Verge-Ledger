@@ -1,7 +1,7 @@
 name: Species or Guidance Correction
 description: Propose a correction to the indicator species dataset, weights, or guidance citations
-title: "[Species Correction]: "
-labels: ["botany", "data"]
+title: '[Species Correction]: '
+labels: ['botany', 'data']
 body:
   - type: markdown
     attributes:

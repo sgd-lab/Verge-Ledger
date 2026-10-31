@@ -177,21 +177,21 @@ Use the Contributor Covenant version 2.1 text, fetched from the official source 
 
 ## 6\. docs/PRIVACY.md (outline for the agent to complete accurately)
 
-* What is stored locally (workspaces, segments, observations, photos) and that it never leaves the device unless the user enables sync.
-* What the optional server stores and for how long.
-* That no cookies, analytics or third-party scripts are used.
-* That map tiles are fetched from the configured tile provider, which will see the user's IP address and the tiles requested. Name the provider.
-* How to delete data: local delete, and workspace deletion request by edit key.
-* Contact.
-* Mark as "not legal advice" and have the owner review before launch.
+- What is stored locally (workspaces, segments, observations, photos) and that it never leaves the device unless the user enables sync.
+- What the optional server stores and for how long.
+- That no cookies, analytics or third-party scripts are used.
+- That map tiles are fetched from the configured tile provider, which will see the user's IP address and the tiles requested. Name the provider.
+- How to delete data: local delete, and workspace deletion request by edit key.
+- Contact.
+- Mark as "not legal advice" and have the owner review before launch.
 
 ## 7\. docs/DATA.md (outline)
 
-* Indicator species: source for each entry, how weights were assigned (provisional), review status, how to propose changes.
-* Guidance statements: sources and retrieval dates.
-* Council facts: how verified, how to propose, status meanings.
-* Licences table: code MIT, documentation and original data CC BY 4.0, third-party sources with their licences and attribution wording, map tiles attribution.
-* Demo data statement.
+- Indicator species: source for each entry, how weights were assigned (provisional), review status, how to propose changes.
+- Guidance statements: sources and retrieval dates.
+- Council facts: how verified, how to propose, status meanings.
+- Licences table: code MIT, documentation and original data CC BY 4.0, third-party sources with their licences and attribution wording, map tiles attribution.
+- Demo data statement.
 
 ## 8\. .github/ISSUE_TEMPLATE files
 
@@ -221,9 +221,9 @@ All notable changes are listed here. Format follows Keep a Changelog. Versions f
 
 ## 10\. GitHub repository settings (human steps)
 
-* Public repository named verge-ledger (or final name).
-* Description: "Evidence and cut-timing tools for road verges. Offline-first. For parish councils and volunteers."
-* Topics: biodiversity, road-verges, citizen-science, pollinators, wildflowers, parish-councils, open-source, offline-first, pwa, uk.
-* Enable Issues and Discussions. Enable GitHub Pages from the deploy workflow.
-* Add a social preview image only if you made it yourself.
-* Pin the live demo link in the About box.
+- Public repository named verge-ledger (or final name).
+- Description: "Evidence and cut-timing tools for road verges. Offline-first. For parish councils and volunteers."
+- Topics: biodiversity, road-verges, citizen-science, pollinators, wildflowers, parish-councils, open-source, offline-first, pwa, uk.
+- Enable Issues and Discussions. Enable GitHub Pages from the deploy workflow.
+- Add a social preview image only if you made it yourself.
+- Pin the live demo link in the About box.
