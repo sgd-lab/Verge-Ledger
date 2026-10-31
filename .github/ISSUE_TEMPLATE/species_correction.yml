@@ -1,0 +1,53 @@
+name: Species or Guidance Correction
+description: Propose a correction to the indicator species dataset, weights, or guidance citations
+title: "[Species Correction]: "
+labels: ["botany", "data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help improve botanical accuracy. All proposals must cite an authoritative reference (BSBI, Plantlife, Wildlife Trusts).
+  - type: input
+    id: species_name
+    attributes:
+      label: Species Name
+      description: Common and scientific botanical name.
+      placeholder: Common Knapweed (Centaurea nigra)
+    validations:
+      required: true
+  - type: dropdown
+    id: correction_type
+    attributes:
+      label: What is wrong?
+      options:
+        - Incorrect provisional weighting (1-3)
+        - Ecological grouping / category mismatch
+        - Identification note needs clarification
+        - Vulnerable / sensitive taxon flag missing
+        - Spelling / nomenclature update
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_fix
+    attributes:
+      label: Proposed Correction
+      description: Explain the required change and botanical rationale.
+    validations:
+      required: true
+  - type: input
+    id: reference_url
+    attributes:
+      label: Authoritative Botanical Source URL
+      description: BSBI taxon page, Plantlife guide, or published flora link.
+      placeholder: https://plantatlas2020.org/atlas/2cd4p9h.8y6
+    validations:
+      required: true
+  - type: input
+    id: source_retrieved_at
+    attributes:
+      label: Date Retrieved
+      description: YYYY-MM-DD
+      placeholder: 2026-10-31
+    validations:
+      required: true

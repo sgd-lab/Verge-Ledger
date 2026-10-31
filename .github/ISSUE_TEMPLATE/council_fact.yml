@@ -1,0 +1,64 @@
+name: Council Fact Proposal
+description: Propose a verified highway verge mowing policy or fact for an English council
+title: "[Council Fact]: "
+labels: ["council-registry", "data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every council fact in Verge Ledger must be backed by a primary source URL. No invented data.
+  - type: input
+    id: council_name
+    attributes:
+      label: Council Name
+      description: Full name of the English highway authority (County or Unitary).
+      placeholder: Norfolk County Council
+    validations:
+      required: true
+  - type: dropdown
+    id: fact_key
+    attributes:
+      label: Fact Type
+      description: Select the policy category.
+      options:
+        - ruralCutsPerYear
+        - urbanCutsPerYear
+        - firstCutMonth
+        - cuttingsPolicy
+        - designatedScheme
+        - designatedCount
+        - designatedLengthKm
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: fact_value
+    attributes:
+      label: Fact Details & Value
+      description: What is the specific policy or figure stated by the council?
+      placeholder: Rural verges receive 2 cuts per year, starting in June. Cuttings are left on site.
+    validations:
+      required: true
+  - type: input
+    id: source_url
+    attributes:
+      label: Primary Source URL
+      description: Official council web page, policy PDF, or FOI disclosure. Must start with http:// or https://.
+      placeholder: https://www.norfolk.gov.uk/roads-and-transport/roads/road-maintenance/verge-cutting
+    validations:
+      required: true
+  - type: input
+    id: source_retrieved_at
+    attributes:
+      label: Date Read / Retrieved
+      description: When did you verify this source? (YYYY-MM-DD)
+      placeholder: 2026-10-31
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any nuances, parish exceptions, or contract expiration details.
+    validations:
+      required: false
