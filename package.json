@@ -3,5 +3,50 @@
   "version": "0.1.0",
   "private": true,
   "description": "Evidence and cut-timing tools for road verges. Offline-first. For parish councils and volunteers in England.",
-  "license": "MIT"
+  "license": "MIT",
+  "workspaces": [
+    "packages/core",
+    "packages/data",
+    "apps/web",
+    "apps/api",
+    "e2e"
+  ],
+  "scripts": {
+    "dev": "npm.cmd run dev -w @verge-ledger/web",
+    "dev:all": "concurrently -k -p \"[{name}]\" -n \"WEB,API\" -c \"cyan,magenta\" \"npm.cmd run dev -w @verge-ledger/web\" \"npm.cmd run dev -w @verge-ledger/api\"",
+    "build": "tsc --build",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "licence-check": "license-checker-rseidelsohn --production --onlyAllow \"MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD\"",
+    "audit": "npm.cmd audit --audit-level=high",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.14.0",
+    "husky": "^9.1.7",
+    "license-checker-rseidelsohn": "^3.3.0",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  }
 }

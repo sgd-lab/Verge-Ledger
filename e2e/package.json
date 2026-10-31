@@ -1,0 +1,17 @@
+{
+  "name": "@verge-ledger/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.1",
+    "@verge-ledger/core": "*",
+    "typescript": "^5.7.2"
+  }
+}
