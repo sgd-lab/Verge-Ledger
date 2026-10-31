@@ -118,9 +118,7 @@ export function calculateTriageScore(input: ScoreObservationInput): ScoreResult 
 
   if (hasOrchid) {
     // Orchid Override: minimum Tier 1 Gold, score >= 70
-    if (finalScore < 70) {
-      finalScore = 70;
-    }
+    finalScore = Math.max(finalScore, 70);
     tier = 'expert_review';
     tierLabel = 'Refer for expert review';
     tierLevel = 1;
@@ -129,9 +127,7 @@ export function calculateTriageScore(input: ScoreObservationInput): ScoreResult 
     breakdown.push('Orchid override applied: score elevated to >= 70, minimum Tier 1 (Gold).');
   } else if (input.forbCountBand === '0' && positiveIndicatorCount === 0) {
     // Zero-Forb Override: max Tier 3 Bronze, max score 40
-    if (finalScore > 40) {
-      finalScore = 40;
-    }
+    finalScore = Math.min(finalScore, 40);
     tier = 'ordinary';
     tierLabel = 'Ordinary verge';
     tierLevel = 3;

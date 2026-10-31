@@ -39,17 +39,13 @@ export function generateScoreExplanation(
 
   // 3. Flags and suggestions
   if (result.flags.includes(MANAGEMENT_FLAGS.CUTTINGS_LEFT)) {
-    suggestions.push(
-      MANAGEMENT_FLAG_MESSAGES[MANAGEMENT_FLAGS.CUTTINGS_LEFT] ??
-        'Collecting cuttings prevents nutrient buildup.',
-    );
+    const msg = MANAGEMENT_FLAG_MESSAGES[MANAGEMENT_FLAGS.CUTTINGS_LEFT];
+    if (msg) suggestions.push(msg);
   }
 
   if (result.flags.includes(MANAGEMENT_FLAGS.MAY_JUNE_CUT)) {
-    suggestions.push(
-      MANAGEMENT_FLAG_MESSAGES[MANAGEMENT_FLAGS.MAY_JUNE_CUT] ??
-        'Early summer cutting reduces flowering.',
-    );
+    const msg = MANAGEMENT_FLAG_MESSAGES[MANAGEMENT_FLAGS.MAY_JUNE_CUT];
+    if (msg) suggestions.push(msg);
   }
 
   if (result.subscores.indicators === 0) {
