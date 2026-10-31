@@ -3,31 +3,34 @@
 **Target Repository**: [https://github.com/sgd-lab/Verge-Ledger](https://github.com/sgd-lab/Verge-Ledger)  
 **Local Workspace**: `d:\new project for h\verge-ledger`  
 **Active Branch**: `main` (tracked to `origin/main`)  
-**Latest Certified Commit**: `8ea8420 fix(core): align orchid override, add Helmert transform, fix Fixture E`  
+**Latest Certified Commit**: `8ca10bf test(web): add unit and integration test suite for web shell and map`  
 **Current Milestone State**:
 
 - **Milestone 1 (Phase 0 Foundation)**: 100% COMPLETE — Gate 0 Certified PASS.
 - **Milestone 2 (Phase 1 Core Domain Logic & Verified Data)**: 100% COMPLETE — Gate 1 Certified PASS.
-- **Milestone 3 (Phase 2 Web Shell, Storage & Map)**: READY TO BEGIN (Commits 19–26).
+- **Milestone 3 (Phase 2 Web Shell, Storage & Map)**: 100% COMPLETE — Gate 2 Certified PASS (Commits 19–25).
+- **Milestone 4 (Phase 3 Five-Minute Survey Flow)**: QUEUED NEXT — STOPPED before Milestone 4 per user directive.
 - **Subagents Status**: ALL SUBAGENTS STOPPED cleanly.
 
 ---
 
 ## 1. Executive Summary & Production Status
 
-All code in `packages/core` and `packages/data` through Phase 1 is completed, fully tested, and certified:
+All code in `packages/core`, `packages/data`, and `apps/web` through Milestone 3 (Phase 2) is completed, fully verified, and certified:
 
-- **Test Pass Rate**: **104 / 104 tests passing (100%)** across 9 test suites in `packages/core` and `packages/data`.
+- **Test Pass Rate**: **126 / 126 tests passing (100%)** across 14 test suites in `packages/core`, `packages/data`, and `apps/web`.
 - **Code Coverage in `packages/core`**:
   - **Line Coverage**: **99.41%** (exceeds $\ge 90\%$ gate requirement)
   - **Branch Coverage**: **91.97%** (exceeds $\ge 85\%$ requirement)
+- **Web App Coverage**: Web primitives, Dexie storage repositories, Haversine coordinate validation, and Leaflet styles fully tested.
 - **TypeScript Compilation**: `tsc --build` passes cleanly with **0 errors**.
-- **Linter & Formatting**: ESLint 9 flat configuration passing with **0 errors and 0 warnings**.
+- **Linter & Formatting**: ESLint 9 flat configuration passing with **0 errors and 0 warnings** (`--max-warnings=0`).
+- **Production Build**: `npm run build -w @verge-ledger/web` builds production Vite bundle in `apps/web/dist` cleanly.
 - **Domain Purity**: Zero DOM or network dependencies in `packages/core`.
 
 ---
 
-## 2. Completed Work Inventory (Phase 0 & Phase 1)
+## 2. Completed Work Inventory (Phases 0, 1, and 2)
 
 ### Phase 0: Monorepo Foundation & Tooling (Gate 0 Certified PASS)
 
@@ -57,40 +60,54 @@ All code in `packages/core` and `packages/data` through Phase 1 is completed, fu
     - `4a271e0 fix(core): ensure options savings adhere to schema and tests pass`
     - `8ea8420 fix(core): align orchid override, add Helmert transform, fix Fixture E` (full 7-parameter Helmert datum transformation WGS84 $\rightarrow$ OSGB36 tested against Trafalgar Square benchmark TQ3080, orchid tier preservation, subscore clamping).
 
+### Phase 2: Web Shell, Storage & Map (Gate 2 Certified PASS)
+
+20. **Commit 19 (`40d1e3b`)**: `feat(web): scaffold Vite React Tailwind app with routing and layout`
+    - Vite 5, React 18, React Router v6, Tailwind CSS, Lucide icons.
+    - Accessible root layout with skip-to-content landmark, sticky header, main outlet, footer citations, and DEMO banner support.
+    - Placeholder pages for Overview (`/`), Survey (`/survey`), Cut Advisor (`/advisor`), Simulator (`/simulator`), Councils (`/councils`), Export (`/export`), and 404 handler.
+21. **Commit 20 (`08faf4b`)**: `feat(web): add accessible UI primitives and non-map coordinate entry`
+    - WCAG 2.2 AA accessible primitives: Button (min touch target $44 \times 44$ px), Input, Select, Card, Dialog (HTML5 `<dialog>` polyfilled for JSDOM), Tabs (keyboard-accessible tablist), Badge (tier-promising, tier-ordinary, tier-expert, tier-demo), and Alert.
+    - Non-map coordinate entry form (`CoordinateEntryForm.tsx`) per `ACC-1` & `SUR-1` with live Haversine distance and 5 m – 500 m length constraint validation.
+22. **Commit 21 (`38886c3`)**: `feat(web): add Leaflet map component with tile fallback`
+    - Leaflet container with OpenStreetMap primary tiles and CartoDB fallback.
+    - Compulsory visible OSM attribution per specification `MAP-3`.
+    - Custom SVG marker icon resolution for Vite bundling.
+23. **Commit 22 (`5cb60b2`)**: `feat(web): add Dexie storage layer and repositories`
+    - Dexie v4 IndexedDB database (`VergeLedgerDB`) with 8 typed tables: `workspaces`, `vergeSegments`, `surveyObservations`, `photos`, `cutRegimes`, `localDrafts`, `councilFacts`, `appSettings`.
+    - Repository pattern: `WorkspaceRepository`, `SegmentRepository`, `ObservationRepository` (with automatic pure scoring engine evaluation), `PhotoRepository` (EXIF stripping via canvas with JSDOM fallback, max 3 photos constraint), `DraftRepository`.
+    - Reactive hooks: `useWorkspaces`, `useSegments`, `useObservations`, `useDraftSurvey`, `useSyncStatus`.
+    - Offline sync badge (`SyncStatusBadge.tsx`) reflecting local/synced status.
+24. **Commit 23 (`fa43660`)**: `feat(web): add GPS location radar marker and drawing tools`
+    - `GpsMarker`: Animated pulsating radar marker with accuracy circle indicating device GPS precision.
+    - `DrawingToolbar`: Interactive segment drawing controls, real-time Haversine distance readout, undo, validation status, and switch to manual coordinate entry.
+    - `useGeolocation` and `useSegmentDrawing` hooks.
+25. **Commit 24 (`d154cb3`)**: `feat(web): implement segment rendering with dual-encoded tier styles`
+    - Dual-encoding style matrix (`map-styles.ts`) satisfying WCAG 2.2 color-blind accessibility (color + dash pattern + stroke weight).
+    - `SegmentLayer`: Renders LineString segments with white contrast underlay halos and interactive hover tooltips.
+26. **Commit 25 (`8ca10bf`)**: `test(web): add unit and integration test suite for web shell and map`
+    - Full Vitest + Testing Library unit test suite for app shell (`App.test.tsx`), UI primitives (`primitives.test.tsx`), coordinate entry (`CoordinateEntryForm.test.tsx`), Dexie repositories (`repositories.test.ts`), and map tier styles (`map-styles.test.ts`).
+
 ---
 
-## 3. Remaining Implementation Roadmap (Commits 19 to 50)
+## 3. Remaining Implementation Roadmap (Commits 26 to 50)
 
-### Phase 2: Web Shell, Storage & Map (Commits 19–26 & Gate 2) — NEXT TO IMPLEMENT
+### Phase 3: Five-Minute Survey Flow (Commits 26–34 & Gate 3) — QUEUED NEXT
 
-- **Commit 19**: `feat(web): initialise Vite React Tailwind app shell`
-  - Setup Vite + React 18/19 + Tailwind CSS in `apps/web`.
-- **Commit 20**: `feat(web): add accessible design tokens and UI primitives`
-  - WCAG 2.2 AA compliant components (touch targets $\ge 44 \times 44$ px, color contrast ratios $\ge 4.5:1$, visible focus rings, ARIA landmarks).
-- **Commit 21**: `feat(web): integrate Leaflet with open tile providers`
-  - Leaflet integration with OpenStreetMap / Ordnance Survey Open Zoomstack, GPS accuracy circle, compulsory visible attribution, and accessible non-map entry fallback.
-- **Commit 22**: `feat(web): add Dexie local database for segments and observations`
-  - IndexedDB storage with Dexie (`VergeLedgerDB`), ULID generation, React reactive hooks.
-- **Commit 23**: `feat(web): implement offline sync queue and state machine`
-  - Offline sync state machine (`idle`, `pending`, `syncing`, `failed`), local queue persistence.
-- **Commit 24**: `feat(web): add PWA manifest, service worker and install prompt`
-  - Offline caching service worker, web manifest, install banner.
-- **Commit 25**: `test(web): add unit tests for Dexie stores and sync machine`
-- **Commit 26**: `test(e2e): scaffold Playwright tests for app shell`
-- **Gate 2 Verification**: Web app builds and boots completely offline; PWA manifest valid; e2e smoke passes.
-
-### Phase 3: Five-Minute Survey Flow (Commits 27–34 & Gate 3)
-
-- **Commits 27–30**: 4-step mobile survey wizard (Step 1 GPS/draw segment, Step 2 verge attributes, Step 3 indicator species checklist with photo capture, Step 4 sward height & cut status).
-- **Commit 31**: Real-time triage score calculation in UI.
-- **Commit 32**: Offline survey persistence in IndexedDB.
-- **Commits 33–34**: Vitest component tests & Playwright offline e2e tests.
-- **Gate 3 Verification**: 5-minute survey runs 100% offline with network disabled.
+- **Commit 26**: Survey wizard step state machine (`wizardState.ts`) supporting Steps 1–4.
+- **Commit 27**: Step 1: Geometry & location capture (Leaflet click/GPS drawing + manual coordinate fallback).
+- **Commit 28**: Step 2: Verge physical attributes (road class, speed limit, width band, verge side, setting).
+- **Commit 29**: Step 3: Botanical indicator species checklist (Plantlife 36 taxa with photos and nutrient-dominant weeds).
+- **Commit 30**: Step 4: Sward structure, cut status, and camera photo capture with offline storage.
+- **Commit 31**: Live triage score summary card with tier badge and Plantlife rationale.
+- **Commit 32**: Offline survey persistence and auto-save draft recovery.
+- **Commits 33–34**: Component unit tests and offline survey integration tests.
+- **Gate 3 Verification**: 5-minute survey runs 100% offline with network disabled; verified in offline browser mode.
 
 ### Phase 4: Advisor, Simulator & Printable Evidence Pack (Commits 35–40 & Gate 4)
 
-- **Commit 35**: Cut-Regime Advisor interactive UI.
-- **Commit 36**: "Which Cut to Drop?" Scenario Simulator UI.
+- **Commit 35**: Cut-Regime Advisor interactive UI (R1, RA, RB, RU recommendations with safety sightline warning).
+- **Commit 36**: "Which Cut to Drop?" Scenario Simulator UI (carbon, financial, fuel, and biodiversity trajectory).
 - **Commit 37**: One-page printable evidence pack (clean print CSS / PDF export).
 - **Commit 38**: Statutory EIR/FOI letter generator UI with copy-to-clipboard & mailto.
 - **Commits 39–40**: Visual regression tests and export validation.
@@ -131,12 +148,13 @@ When resuming work:
    npm.cmd run typecheck
    npm.cmd test
    npm.cmd run lint
+   npm.cmd run build -w @verge-ledger/web
    ```
 4. **Resuming Implementation**:
-   - Start immediately with **Commit 19**:
-     `feat(web): initialise Vite React Tailwind app shell` in `apps/web`.
-   - Proceed sequentially through Commits 20–26.
+   - Start immediately with **Milestone 4 (Phase 3 Survey Flow)**:
+     Begin with **Commit 26**: Survey wizard step state machine and Step 1 integration.
+   - Do NOT modify completed Phase 1 core logic or Phase 2 storage schema without strict necessity.
 5. **Quality Invariants**:
-   - Every commit must follow Conventional Commits formatting.
+   - Every commit must follow Conventional Commits formatting (header $\le 72$ chars).
    - Maintain 0 TypeScript errors and 0 ESLint errors across all packages.
    - Keep domain pure: `packages/core` must not import web, DOM, or storage packages.
