@@ -4,6 +4,7 @@ import {
   generateScoreExplanation,
   MANAGEMENT_FLAGS,
   SCO_4_DISCLAIMER,
+  ScoreResultSchema,
 } from '../src/index.js';
 
 describe('verge-triage-v1 Pure Scoring Engine', () => {
@@ -188,10 +189,43 @@ describe('verge-triage-v1 Pure Scoring Engine', () => {
       expect(result.flags).toContain(MANAGEMENT_FLAGS.CUTTINGS_LEFT);
       expect(result.flags).toContain(MANAGEMENT_FLAGS.RANK_GROWTH);
     });
+
+    it('verifies Spec Fixture E: Score 41 (Raw 35, Base 41, N 0, Orchid override tier Promising)', () => {
+      const result = calculateTriageScore({
+        forbCountBand: '3_5',
+        indicators: [
+          {
+            id: 'dactylorhiza-fuchsii',
+            weight: 3,
+            group: 'orchid',
+            sensitive: true,
+          },
+        ],
+        swardStructure: 'short_uniform',
+        nutrientDominantCount: 0,
+        cutState: 'uncut',
+        cuttingsState: 'na',
+      });
+
+      expect(result.subscores.richness).toBe(18);
+      expect(result.subscores.indicators).toBe(9);
+      expect(result.subscores.sward).toBe(8);
+      expect(result.subscores.nutrientPenalty).toBe(0);
+      expect(result.rawScore).toBe(35);
+      expect(result.baseScore).toBe(41);
+      expect(result.finalScore).toBe(41);
+      expect(result.tier).toBe('promising');
+      expect(result.tierLabel).toBe('Promising verge');
+      expect(result.tierLevel).toBe(2);
+      expect(result.badgeCode).toBe('silver');
+      expect(result.confidence).toBe('medium');
+      expect(result.flags).toContain(MANAGEMENT_FLAGS.ORCHID_RECORDED);
+      expect(result.flags).not.toContain(MANAGEMENT_FLAGS.NO_FLAGS);
+    });
   });
 
   describe('Mandatory Overrides and Heuristics', () => {
-    it('applies orchid override: >= 1 orchid forces minimum Tier 1 (Gold) and score >= 70', () => {
+    it('applies orchid override: >= 1 orchid elevates Ordinary tier to Promising without altering score', () => {
       const result = calculateTriageScore({
         forbCountBand: '1_2', // R = 8
         indicators: [
@@ -207,13 +241,59 @@ describe('verge-triage-v1 Pure Scoring Engine', () => {
         cuttingsState: 'na',
       });
 
-      // Without orchid override: Raw = 8 + 9 + 8 = 25 -> Base = 29 -> Tier 3
-      // With orchid override: score >= 70, tier = expert_review (Tier 1 Gold)
-      expect(result.finalScore).toBeGreaterThanOrEqual(70);
-      expect(result.tier).toBe('expert_review');
-      expect(result.tierLevel).toBe(1);
-      expect(result.badgeCode).toBe('gold');
+      // Raw = 8 + 9 + 8 = 25 -> Base = round(100 * 25 / 85) = 29
+      // Standard tier for 29 is Ordinary (Tier 3 Bronze)
+      // Orchid override elevates tier to Promising (Tier 2 Silver) while preserving score 29
+      expect(result.finalScore).toBe(29);
+      expect(result.tier).toBe('promising');
+      expect(result.tierLevel).toBe(2);
+      expect(result.badgeCode).toBe('silver');
+      expect(result.tierLabel).toBe('Promising verge');
       expect(result.flags).toContain(MANAGEMENT_FLAGS.ORCHID_RECORDED);
+    });
+
+    it('clamps negative subscores to zero and conforms to ScoreResultSchema', () => {
+      const result = calculateTriageScore({
+        forbCountBand: '0',
+        indicatorWeightsSum: -10,
+        nutrientDominantCount: -5,
+        swardStructure: 'tall_rank',
+        cutState: 'uncut',
+        cuttingsState: 'na',
+      });
+
+      expect(result.subscores.indicators).toBe(0);
+      expect(result.subscores.nutrientPenalty).toBe(0);
+      expect(result.rawScore).toBe(3);
+      expect(result.baseScore).toBe(4);
+      expect(result.finalScore).toBe(4);
+      expect(result.tier).toBe('ordinary');
+      expect(() => ScoreResultSchema.parse(result)).not.toThrow();
+    });
+
+    it('deduplicates indicator species and nutrient dominants', () => {
+      const duplicateIndicators = calculateTriageScore({
+        forbCountBand: '0',
+        indicators: [
+          { id: 'centaurea-nigra', weight: 2, group: 'forb' },
+          { id: 'centaurea-nigra', weight: 2, group: 'forb' },
+        ],
+        swardStructure: 'short_uniform',
+        cutState: 'uncut',
+        cuttingsState: 'na',
+      });
+      // Weight 2 once -> effective weight 2 -> round(30 * 2 / 10) = 6
+      expect(duplicateIndicators.subscores.indicators).toBe(6);
+
+      const duplicateNutrients = calculateTriageScore({
+        forbCountBand: '0',
+        swardStructure: 'short_uniform',
+        cutState: 'uncut',
+        cuttingsState: 'na',
+        nutrientDominantIds: ['urtica-dioica', 'urtica-dioica'],
+      });
+      // 1 unique species -> penalty 7
+      expect(duplicateNutrients.subscores.nutrientPenalty).toBe(7);
     });
 
     it('applies zero-forb override: 0 forbs and 0 indicators caps at Tier 3 (Bronze) and max score 40', () => {
@@ -379,7 +459,9 @@ describe('verge-triage-v1 Pure Scoring Engine', () => {
         cutState: 'uncut',
         cuttingsState: 'removed',
       });
-      expect(orchidIds.tier).toBe('expert_review');
+      expect(orchidIds.tier).toBe('promising');
+      expect(orchidIds.tierLevel).toBe(2);
+      expect(orchidIds.badgeCode).toBe('silver');
       expect(orchidIds.flags).toContain(MANAGEMENT_FLAGS.ORCHID_RECORDED);
     });
 

@@ -143,6 +143,7 @@ describe('Which-Cut-To-Drop Scenario Simulator', () => {
       expect(opt?.savings).toBeDefined();
       expect(opt?.savings?.costSavedGbp).toBe(1200); // 1 * 120 * 10
       expect(opt?.savings?.fuelSavedLitres).toBe(150); // 1 * 15 * 10
+      expect(opt?.savings?.carbonSavedKg).toBe(402); // 150 * 2.68 = 402.0 kg CO2e
       expect(opt?.savings?.operationalReductionPercent).toBe(33); // 1/3 ~ 33%
       expect(opt?.savings?.label).toContain(
         'Based on your assumption. Not an official council calculation.',

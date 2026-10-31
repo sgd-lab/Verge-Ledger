@@ -272,7 +272,7 @@ describe('GeoJSON & CSV Export Helpers', () => {
       const sensitiveLine = lines[2]!;
       expect(sensitiveLine).toContain(sensitiveSegment.id);
       expect(sensitiveLine).toContain('true'); // sensitive_taxa_recorded
-      expect(sensitiveLine).toContain('SP5106'); // OS Grid Ref for Oxford
+      expect(sensitiveLine).toContain('SP5105'); // OS Grid Ref for coarsened coordinates (SP5105)
     });
 
     it('escapes notes containing commas, quotes, and newlines per RFC 4180', () => {

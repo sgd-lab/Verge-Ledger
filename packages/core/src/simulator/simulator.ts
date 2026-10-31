@@ -48,11 +48,14 @@ export function simulateCutDrop(params: SimulationParams): SimulationResult {
     const fuelSavedLitres = costInputs.fuelLitersPerCutPerKm
       ? cutsToRemove * costInputs.fuelLitersPerCutPerKm * km
       : undefined;
+    const carbonSavedKg =
+      fuelSavedLitres !== undefined ? Math.round(fuelSavedLitres * 2.68 * 10) / 10 : undefined;
     const operationalReductionPercent = Math.round((cutsToRemove / currentCuts.length) * 100);
 
     savings = {
       costSavedGbp,
       fuelSavedLitres,
+      carbonSavedKg,
       operationalReductionPercent,
       label: 'Based on your assumption. Not an official council calculation.',
     };

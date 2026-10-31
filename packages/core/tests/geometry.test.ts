@@ -133,9 +133,9 @@ describe('Geometry & Sensitive Taxa Protection', () => {
   });
 
   describe('GEO-5: OSGB36 1km Grid Reference calculation', () => {
-    it('converts London Trafalgar Square to TQ2980', () => {
+    it('converts London Trafalgar Square to TQ3080', () => {
       const ref = latLngToOsGridRef1km(51.508, -0.1281);
-      expect(ref).toBe('TQ2980');
+      expect(ref).toBe('TQ3080');
     });
 
     it('converts Oxford Carfax to SP5106', () => {

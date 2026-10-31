@@ -49,6 +49,7 @@ export const IndicativeSavingsSchema = z
   .object({
     costSavedGbp: z.number().optional(),
     fuelSavedLitres: z.number().optional(),
+    carbonSavedKg: z.number().optional(),
     operationalReductionPercent: z.number(),
     label: z.string(),
   })
