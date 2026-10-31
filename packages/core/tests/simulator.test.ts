@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SIMULATOR_DISCLAIMER, simulateCutDrop } from '../src/index.js';
+import { SIMULATOR_DISCLAIMER, simulateCutDrop, getCombinations } from '../src/index.js';
 
 describe('Which-Cut-To-Drop Scenario Simulator', () => {
   describe('4 Canonical Spec Test Cases', () => {
@@ -189,6 +189,39 @@ describe('Which-Cut-To-Drop Scenario Simulator', () => {
       });
 
       expect(result.safetyDisclaimer).toBe(SIMULATOR_DISCLAIMER);
+    });
+
+    it('handles combinations boundaries and selective cost inputs', () => {
+      // Test selective cost inputs (cost without fuel, and fuel without cost)
+      const costOnly = simulateCutDrop({
+        currentCuts: [
+          { id: 'c1', month: 5 },
+          { id: 'c2', month: 9 },
+        ],
+        tier: 'ordinary',
+        cuttingsRemovable: 'yes',
+        cutsToRemove: 1,
+        costInputs: { vergeLengthKm: 10, costPerCutPerKm: 150 },
+      });
+      expect(costOnly.indicativeSavings?.costSavedGbp).toBe(1500);
+      expect(costOnly.indicativeSavings?.fuelSavedLitres).toBeUndefined();
+
+      const fuelOnly = simulateCutDrop({
+        currentCuts: [
+          { id: 'c1', month: 5 },
+          { id: 'c2', month: 9 },
+        ],
+        tier: 'ordinary',
+        cuttingsRemovable: 'yes',
+        cutsToRemove: 1,
+        costInputs: { kmOfRoad: 10, fuelLitersPerCutPerKm: 25 },
+      });
+      expect(fuelOnly.indicativeSavings?.costSavedGbp).toBeUndefined();
+      expect(fuelOnly.indicativeSavings?.fuelSavedLitres).toBe(250);
+
+      // Boundary tests for getCombinations
+      expect(getCombinations([1, 2], 0)).toEqual([]);
+      expect(getCombinations([1], 5)).toEqual([]);
     });
   });
 });

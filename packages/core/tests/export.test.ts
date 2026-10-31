@@ -285,6 +285,55 @@ describe('GeoJSON & CSV Export Helpers', () => {
 
       expect(csv).toContain('"Notes with, comma, ""quotes"", and\nnewline."');
     });
+
+    it('handles segments without observations and roadName null cleanly', () => {
+      const bareSegment: VergeSegment = {
+        ...ordinarySegment,
+        id: '01JBC000000000000000000099',
+        roadName: null,
+      };
+
+      const csv = exportToCsv([bareSegment], [], sampleIndicators);
+      const lines = csv.split('\r\n').filter(Boolean);
+      expect(lines.length).toBe(2);
+      expect(lines[1]).toContain(bareSegment.id);
+
+      const geojson = exportToGeoJson([bareSegment], [], sampleIndicators);
+      expect(geojson.features[0]!.properties.triageScore).toBeNull();
+      expect(geojson.features[0]!.properties.roadName).toBeNull();
+    });
+
+    it('handles observations with precomputed scoreResult, unknown IDs, and null lastCutMonth', () => {
+      const obsWithScore: SurveyObservation = {
+        ...ordinaryObservation,
+        indicatorIds: ['unknown-species-id'],
+        nutrientDominantIds: ['unknown-nutrient-id'],
+        lastCutMonth: null,
+        scoreResult: {
+          rawScore: 50,
+          baseScore: 59,
+          finalScore: 59,
+          subscores: { richness: 28, indicators: 10, sward: 15, nutrientPenalty: 0 },
+          tier: 'promising',
+          tierLabel: 'Promising verge',
+          tierLevel: 2,
+          badgeCode: 'silver',
+          confidence: 'medium',
+          flags: ['NO_FLAGS'],
+          breakdown: ['Richness: 28'],
+          disclaimer: 'test disclaimer',
+        },
+      };
+
+      const geojson = exportToGeoJson([ordinarySegment], [obsWithScore], sampleIndicators);
+      expect(geojson.features[0]!.properties.triageScore).toBe(59);
+      expect(geojson.features[0]!.properties.indicatorSpecies).toContain('unknown-species-id');
+      expect(geojson.features[0]!.properties.nutrientDominants).toContain('unknown-nutrient-id');
+
+      const csv = exportToCsv([ordinarySegment], [obsWithScore], sampleIndicators);
+      expect(csv).toContain('59');
+      expect(csv).toContain('unknown-species-id');
+    });
   });
 
   describe('EXP-4: escapeCsvField helper', () => {

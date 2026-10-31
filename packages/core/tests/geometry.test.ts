@@ -148,6 +148,20 @@ describe('Geometry & Sensitive Taxa Protection', () => {
       expect(ref).toBe('TL4458');
     });
 
+    it('converts Northern England, Scottish Highlands, and coastal points correctly', () => {
+      // Newcastle upon Tyne (NZ square, n100k between 5 and 10, e100k < 5)
+      const newcastle = latLngToOsGridRef1km(54.9783, -1.6178);
+      expect(newcastle.startsWith('NZ')).toBe(true);
+
+      // Inverness, Scottish Highlands (NH square, n100k >= 10)
+      const inverness = latLngToOsGridRef1km(57.4778, -4.2247);
+      expect(inverness.startsWith('NH')).toBe(true);
+
+      // Scilly Isles (SV square, l2Index < 8)
+      const scilly = latLngToOsGridRef1km(49.914, -6.315);
+      expect(scilly.startsWith('SV')).toBe(true);
+    });
+
     it('returns OUT_OF_BOUNDS for coordinates outside the British National Grid', () => {
       expect(latLngToOsGridRef1km(0, 0)).toBe('OUT_OF_BOUNDS');
       expect(latLngToOsGridRef1km(80, 100)).toBe('OUT_OF_BOUNDS');
