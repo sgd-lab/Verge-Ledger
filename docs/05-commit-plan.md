@@ -103,7 +103,7 @@ Gate 5: full local-only product usable end to end.
 | 46  | fix(a11y): resolve axe findings and document keyboard pass                        | axe on all main routes                                                                                     | No serious or critical issues |
 | 47  | chore(security): add CSP, security headers, rate limits, audit and licence checks | CI jobs, header tests                                                                                      | Audit and licence jobs pass   |
 | 48  | docs: add METHOD, DATA, PRIVACY, ACCESSIBILITY and user guide                     | Reflect real behaviour, link sources                                                                       | Links valid                   |
-| 49  | chore(deploy): add Docker, Hostinger static deploy guide and Pages workflow       | .htaccess SPA fallback, deploy docs, static demo deploy                                                    | Demo URL live                 |
+| 49  | chore(deploy): add Docker, static-host deploy guide and Pages workflow       | .htaccess SPA fallback, deploy docs, static demo deploy                                                    | Demo URL live                 |
 | 50  | chore(release): finalise README and community files and tag v0.1.0                | README with screenshots, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue templates, CHANGELOG, HANDOFF, tag | Release created               |
 
 ## After commit 50

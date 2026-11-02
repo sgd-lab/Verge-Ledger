@@ -53,7 +53,7 @@ ecologist review, pilot data, users or endorsements were invented.
   (`playwright test`) now discovers these tests; previously there
   was no Playwright config at all, so that script could not have run
   them.
-- `deploy/github-pages.md`, `deploy/hostinger-static.md` — guides
+- `deploy/github-pages.md`, `deploy/static-hosting.md` — guides
   only, no paid services (see below).
 - `docs/HANDOFF.md` (this file), `CHANGELOG.md` (0.1.0
   [Unreleased]), `docs/OPEN-QUESTIONS.md` (OQ-5–OQ-11 appended;
@@ -125,7 +125,7 @@ form-action 'self'; frame-ancestors 'none'`.
   and the meta tag cannot set HSTS, `X-Content-Type-Options`,
   `Referrer-Policy` or `Permissions-Policy`. The deploy guides
   document the exact header versions to send on a host that supports
-  them (Hostinger `.htaccess` example included).
+  them (`.htaccess` example included in `deploy/static-hosting.md`).
 
 ## Deploy guides (summary)
 
@@ -134,7 +134,7 @@ form-action 'self'; frame-ancestors 'none'`.
   workflow yet — the guide documents adding an `index.html` →
   `404.html` copy step; until then, share only the site root, not
   deep links.
-- `deploy/hostinger-static.md`: upload `apps/web/dist` contents,
+- `deploy/static-hosting.md`: upload `apps/web/dist` contents,
   `.htaccess` SPA fallback (real files served directly), long cache
   (1 year) for hashed `assets/` only with `no-cache` for
   `index.html`/`manifest.webmanifest`/`sw.js`, header versions of
@@ -205,7 +205,7 @@ config.
    confirming the gates above (the quality stream was told not to
    create it, and this copy has no `.git` directory).
 8. **Host headers (if leaving GitHub Pages):** apply the header set
-   in `deploy/hostinger-static.md` on the chosen host.
+   in `deploy/static-hosting.md` on a host that supports custom headers.
 
 ---
 
@@ -214,3 +214,9 @@ config.
 - Pushed to `sgd-lab/Verge-Ledger` main: `93a3a8f632f17589a3076b5474cbbac415130723` (survey/advisor/simulator/councils/export + map fixes) and `f8256dbe51a26f3b52b99fc8efdf1f5580c778c9` (full v0.1.0 scope: photos, drafts, import, demo, registry search, presets, FOI download, evidence-pack formats, workspaces, impact, Fastify API, PWA, coverage). The earlier statement in this file that "nothing was pushed" applied only to the quality stream's working copy at that time and is superseded by these pushes.
 - README replaced with the owner's updated README (2026-11-02), with only factual corrections: real clone URL, WCAG badge worded as a target (axe run pending, OQ-9), API described as in-memory rather than SQLite (OQ-8), data/deploy folders described as they actually are, and PDF described as via browser print.
 - Still pending deletion on GitHub (see OQ-12): `apps/web/src/components/ui/Dialog.tsx` and `Tabs.tsx` (removed locally, still orphaned on main because the push tool cannot delete files), `docs/AGENT_HANDOFF_PLAN.md` (superseded by this file), and `FRONTEND_AUDIT_REPORT.md` (superseded by this file and CHANGELOG; it also still says nothing was pushed).
+
+## Update — 2026-11-02 (brand-specific hosting references removed)
+
+- All brand-specific hosting references removed from docs, README, CHANGELOG and deploy guides. The old brand-named static-host guide was replaced by the generic `deploy/static-hosting.md` (same `.htaccess`/header content, no brand name). The research brief (`docs/00-research-brief.md`) was trimmed to the project-relevant research: its brand-specific evaluation and scoring sections and brand source links were removed; verge evidence, risks and verge sources remain.
+- `docs/ACCESSIBILITY.md` corrected: real routes listed, accordion/modal checklist items removed (no such UI exists).
+- `docs/PRIVACY.md` corrected: the v0.1.0 API has no workspace-deletion endpoint, so the old claim that a deletion request hard-deletes remote data was removed.

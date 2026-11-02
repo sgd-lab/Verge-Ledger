@@ -7,7 +7,7 @@ Read with 01-prd and 03-method-and-rules.
 1. The core value works with no server. Survey, score, advisor, simulator, request builder and evidence pack run entirely in the browser.
 2. The API is optional. It adds shared registry, workspace sync and aggregate impact counters.
 3. Deterministic domain logic lives in a pure TypeScript package with no browser or Node dependencies, so it is trivially testable.
-4. Boring, portable stack that matches Hostinger AI Builder (React, Tailwind, Node).
+4. Boring, portable stack (React, Tailwind, Node).
 5. Every external fact carries a source URL and retrieval date.
 
 ## 2\. Stack
@@ -67,7 +67,6 @@ verge-ledger/
     api/         Fastify API (optional)
   e2e/           Playwright tests
   deploy/
-    hostinger/   .htaccess for SPA fallback, deploy guide
     docker/
 ```
 
@@ -209,11 +208,11 @@ Workflow on push and pull request: install with a lockfile, lint, typecheck, uni
 
 Option A: static demo (no API). Build apps/web with VITE_API_URL empty so it runs in local-only mode. Host on GitHub Pages or any static host. The app uses hash-free routes, so provide an SPA fallback.
 
-Option B: Hostinger shared or Unlimited plan.
+Option B: Any static host.
 
-- Static front end: upload the build output and include deploy/hostinger/.htaccess with SPA fallback rewrite rules and long cache for hashed assets.
-- API: only if the plan supports Node.js applications. Confirm in hPanel before relying on it. Otherwise stay in local-only mode and run the API elsewhere or defer sync.
-- After acceptance the owner may also port the app into Hostinger AI Builder using these docs as the specification. Keep core logic framework-agnostic to make that practical.
+- Static front end: upload the build output and include an `.htaccess` (or equivalent) with SPA fallback rewrite rules and long cache for hashed assets. See `deploy/static-hosting.md`.
+- API: only if the host runs a persistent Node.js application. Otherwise stay in local-only mode and run the API elsewhere or defer sync.
+- Keep core logic framework-agnostic so the app can be ported to another stack later if needed.
 
 Option C: Docker for self-hosting the API and static front end behind a reverse proxy. Provide a Dockerfile and compose example.
 

@@ -59,7 +59,7 @@ fallback, not a replacement for headers:
   `Permissions-Policy`, and it does not apply to the service worker
   script itself the way a header would.
 - If you later move to a host that supports headers (see
-  `deploy/hostinger-static.md`), send the same CSP as a real header
+  `deploy/static-hosting.md`), send the same CSP as a real header
   and keep the meta tag as a defence-in-depth fallback. If
   `VITE_API_URL` ever points at a real API origin, that origin must be
   added to `connect-src` in the header version of the policy.

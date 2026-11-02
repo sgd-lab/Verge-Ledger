@@ -41,7 +41,7 @@ If a surveyor records an indicator species flagged as sensitive (such as wild or
 ## 5. Data Deletion
 
 - **Local Data**: You can delete segments, observations, or entire workspaces at any time from the app settings. Clearing your browser data immediately erases the local IndexedDB database.
-- **Remote Sync Data**: You may issue a permanent workspace deletion request to the API server using your secret edit key. The server immediately hard-deletes the workspace and all associated records.
+- **Remote Sync Data**: The v0.1.0 API has no workspace-deletion endpoint, so remote data cannot currently be deleted this way. Delete workspaces locally in the app; do not sync data you may later need to erase from a server.
 
 ## 6. Contact
 

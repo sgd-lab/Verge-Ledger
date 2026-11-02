@@ -125,7 +125,7 @@ verge-ledger/
 │   ├── web/          # Offline-first Vite + React + Tailwind CSS PWA with Dexie (IndexedDB) & Leaflet
 │   └── api/          # Optional Fastify service for workspace sync & public impact counters (in-memory store in this build; SQLite planned)
 ├── e2e/              # Playwright cross-browser, offline, and axe-core accessibility test suite
-├── deploy/           # GitHub Pages and Hostinger static deploy guides
+├── deploy/           # GitHub Pages and static-host deploy guides
 └── docs/             # Specification pack, ADRs (DECISIONS.md),METHOD.md, DATA.md, PRIVACY.md
 ```
 

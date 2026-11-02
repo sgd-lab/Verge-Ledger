@@ -209,6 +209,6 @@ See 00-research-brief section 7. Additional product risks:
 
 1. Final product name and domain.
 2. Which ecologist or Wildlife Trust contact will review the indicator list and thresholds.
-3. Whether Hostinger Restore Unlimited supports a custom Node API. Local-only mode is the fallback.
+3. Which host to use for a custom Node API, if one is deployed at all. Local-only mode is the fallback.
 4. Tile provider choice for production.
 5. Which county or parish hosts the first real pilot.

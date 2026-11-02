@@ -69,7 +69,7 @@ No v0.1.0 git tag exists yet — creating it is an owner action
   host — GitHub Pages cannot apply custom headers from the repo.
 - **Deploy guides (quality stream):** `deploy/github-pages.md`
   (SPA fallback via `404.html`, local-only build) and
-  `deploy/hostinger-static.md` (static upload, `.htaccess` SPA
+  `deploy/static-hosting.md` (static upload, `.htaccess` SPA
   fallback, long cache for hashed assets only, optional Node API).
 - **Tests (quality stream):** unit/integration coverage raised to the
   existing thresholds, including Survey, Advisor, Simulator, Councils,

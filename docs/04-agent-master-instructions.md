@@ -5,7 +5,7 @@ This document has two parts.
 - Part A: the short prompt to paste into Antigravity (or any coding agent) together with the attached docs.
 - Part B: the full AGENTS.md. The agent must commit this file to the repo root in commit 2.
 
-Attach these docs: 00-research-brief, 01-prd, 02-architecture, 03-method-and-rules, 04 (this file), 05-commit-plan, 06-repo-launch-files, 07-hostinger-application-kit.
+Attach these docs: 00-research-brief, 01-prd, 02-architecture, 03-method-and-rules, 04 (this file), 05-commit-plan, 06-repo-launch-files.
 
 ---
 
@@ -24,7 +24,7 @@ Non-negotiable rules:
 5. No secrets, keys or personal data in the repo. Use .env.example.
 6. Ask me before: choosing a different stack than 02-architecture, adding any paid service or API key, adding any analytics or third-party script, or making any claim in README about endorsements, partners, users or results.
 7. Work loop for each commit: read the plan step, implement, add or update tests, run npm run lint, npm run typecheck, npm test, update docs if behaviour changed, commit with the message from the plan (improve the wording if needed), and after every 3 to 5 commits push to origin.
-8. At the end, write docs/HANDOFF.md listing what is done, what is verified, what is unverified, what I must do by hand (real-world pilot survey, ecologist review, domain, Hostinger steps), and how to run everything.
+8. At the end, write docs/HANDOFF.md listing what is done, what is verified, what is unverified, what I must do by hand (real-world pilot survey, ecologist review, domain, deployment steps), and how to run everything.
 
 Start by asking me for: my full name for the LICENSE, my GitHub username or remote URL, and my preferred git author name and email. Then begin with commit 1.
 

@@ -39,12 +39,11 @@ Verge Ledger is committed to digital inclusion. The application is designed to b
 ### Automated Audits in CI
 
 - Playwright test suites execute automated accessibility audits using `@axe-core/playwright`.
-- CI builds fail if any **serious** or **critical** accessibility violations are detected on primary routes (`/`, `/survey`, `/advisor`, `/simulator`, `/councils`, `/evidence-pack`).
+- CI builds fail if any **serious** or **critical** accessibility violations are detected on primary routes (`/`, `/survey`, `/advisor`, `/simulator`, `/councils`, `/export`, `/workspaces`, `/impact`).
 
 ### Manual Keyboard & Screen Reader Checklist
 
 - [ ] Skip link appears on first tab and moves focus directly to main content.
 - [ ] Visible focus ring (`outline: 2px solid #...`, `outline-offset: 2px`) is never suppressed without an accessible replacement.
 - [ ] Single-page survey form allows full traversal and review without mouse interaction.
-- [ ] Dropdowns and accordions announce expanded/collapsed states correctly to screen readers.
-- [ ] Modal dialogs trap focus and close on `Escape`.
+- [ ] No modal dialogs are used in the current UI; if one is added, it must trap focus and close on `Escape`.
