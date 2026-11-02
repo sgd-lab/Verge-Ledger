@@ -106,3 +106,10 @@ No v0.1.0 git tag exists yet — creating it is an owner action
 - GitHub Pages SPA fallback (`404.html`) is documented but not yet
   added to the Pages workflow (OQ-10).
 - The v0.1.0 tag is not created (OQ-11).
+
+## [Unreleased] — docs refresh 2026-11-02
+
+- README replaced with the owner's updated README, with factual corrections only: real `sgd-lab/Verge-Ledger` clone URL, WCAG badge as a target (axe run pending), API as in-memory rather than SQLite, data/deploy folders as they actually are, PDF via browser print.
+- `docs/HANDOFF.md` updated with the two GitHub pushes (`93a3a8f…`, `f8256dbe…`) and the pending-deletion list (OQ-12).
+- `docs/OPEN-QUESTIONS.md`: added OQ-12 (orphan/stale files pending deletion on GitHub).
+- `docs/ACCESSIBILITY.md`: conformance is a target, not yet verified (axe run pending, OQ-9); survey described as a single-page form, not a multi-step wizard.

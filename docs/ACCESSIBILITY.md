@@ -1,7 +1,7 @@
 # Accessibility Statement and Conformance Guide
 
 **Version**: 0.1.0  
-**Target Conformance**: WCAG 2.2 Level AA
+**Target Conformance**: WCAG 2.2 Level AA — target, not yet verified. Automated axe checks are written (see OQ-9) but have not yet run in a browser, so no conformance claim is made yet.
 
 Verge Ledger is committed to digital inclusion. The application is designed to be fully usable by parish clerks, local volunteers, and residents using assistive technologies, keyboard-only navigation, and high-contrast mobile displays in direct sunlight.
 
@@ -45,6 +45,6 @@ Verge Ledger is committed to digital inclusion. The application is designed to b
 
 - [ ] Skip link appears on first tab and moves focus directly to main content.
 - [ ] Visible focus ring (`outline: 2px solid #...`, `outline-offset: 2px`) is never suppressed without an accessible replacement.
-- [ ] Multi-step survey wizard allows full traversal and review without mouse interaction.
+- [ ] Single-page survey form allows full traversal and review without mouse interaction.
 - [ ] Dropdowns and accordions announce expanded/collapsed states correctly to screen readers.
 - [ ] Modal dialogs trap focus and close on `Escape`.

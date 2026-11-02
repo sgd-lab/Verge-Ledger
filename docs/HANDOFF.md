@@ -206,3 +206,11 @@ config.
    create it, and this copy has no `.git` directory).
 8. **Host headers (if leaving GitHub Pages):** apply the header set
    in `deploy/hostinger-static.md` on the chosen host.
+
+---
+
+## Update — 2026-11-02 (after the quality stream, pushes to GitHub)
+
+- Pushed to `sgd-lab/Verge-Ledger` main: `93a3a8f632f17589a3076b5474cbbac415130723` (survey/advisor/simulator/councils/export + map fixes) and `f8256dbe51a26f3b52b99fc8efdf1f5580c778c9` (full v0.1.0 scope: photos, drafts, import, demo, registry search, presets, FOI download, evidence-pack formats, workspaces, impact, Fastify API, PWA, coverage). The earlier statement in this file that "nothing was pushed" applied only to the quality stream's working copy at that time and is superseded by these pushes.
+- README replaced with the owner's updated README (2026-11-02), with only factual corrections: real clone URL, WCAG badge worded as a target (axe run pending, OQ-9), API described as in-memory rather than SQLite (OQ-8), data/deploy folders described as they actually are, and PDF described as via browser print.
+- Still pending deletion on GitHub (see OQ-12): `apps/web/src/components/ui/Dialog.tsx` and `Tabs.tsx` (removed locally, still orphaned on main because the push tool cannot delete files), `docs/AGENT_HANDOFF_PLAN.md` (superseded by this file), and `FRONTEND_AUDIT_REPORT.md` (superseded by this file and CHANGELOG; it also still says nothing was pushed).
