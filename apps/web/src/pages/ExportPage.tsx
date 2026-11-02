@@ -4,30 +4,42 @@ import { INDICATOR_SPECIES } from '@verge-ledger/data';
 import {
   exportToCsv,
   exportToGeoJson,
-  generateCutAdvice,
 } from '@verge-ledger/core';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
 import { Alert } from '../components/ui/Alert';
-import { useSurveyData } from '../hooks/useSurveyData';
+import { ensureWorkspace, useSurveyData } from '../hooks/useSurveyData';
+import { segmentRepo } from '../db/repositories/SegmentRepository';
+import { observationRepo } from '../db/repositories/ObservationRepository';
 import {
   downloadTextFile,
-  evidencePackText,
   hasSensitiveTaxa,
   latestObservationsBySegment,
-  monthName,
   scoreForObservation,
   segmentLabel,
 } from '../lib/pageData';
+import {
+  buildEvidencePack,
+  isDemoSelection,
+  parseCsvImport,
+  parseGeoJsonImport,
+  type EvidencePackContent,
+  type ImportRowError,
+} from '../lib/importExport';
 
 export function ExportPage(): React.ReactElement {
-  const { segments, observations } = useSurveyData();
+  const { workspaces, segments, observations, councilFacts } = useSurveyData();
   const latestBySegment = useMemo(() => latestObservationsBySegment(observations), [observations]);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>('all');
   const [includeDemo, setIncludeDemo] = useState(false);
-  const [packText, setPackText] = useState<string | null>(null);
+  const [pack, setPack] = useState<EvidencePackContent | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
+  const [importErrors, setImportErrors] = useState<ImportRowError[]>([]);
 
   const selectedSegments =
     selectedSegmentId === 'all'
@@ -40,6 +52,7 @@ export function ExportPage(): React.ReactElement {
   const anySensitive = selectedObservations.some((o) =>
     hasSensitiveTaxa(INDICATOR_SPECIES, o.indicatorIds),
   );
+  const selectionIsDemo = isDemoSelection(workspaces, selectedSegments);
 
   const handleGeoJson = () => {
     const collection = exportToGeoJson(selectedSegments, selectedObservations, INDICATOR_SPECIES, {
@@ -58,51 +71,87 @@ export function ExportPage(): React.ReactElement {
   };
 
   const handleEvidencePack = () => {
-    const segment = selectedSegmentId === 'all' ? segments[0] : selectedSegments[0];
-    if (!segment) {
-      setPackText(null);
+    if (selectedSegments.length === 0) {
+      setPack(null);
       setMessage('Record a segment first.');
       return;
     }
-    const latest = latestBySegment.get(segment.id);
-    const score = latest ? scoreForObservation(latest, INDICATOR_SPECIES) : null;
-    let adviceText = 'No cut-timing advice: record a survey observation first.';
-    if (latest && score) {
-      try {
-        const advice = generateCutAdvice({
-          setting: segment.setting,
-          roadClass: segment.roadClass,
-          widthBand: segment.widthBand,
-          tier: score.tier,
-          cuttingsRemovable:
-            latest.cuttingsState === 'removed'
-              ? 'yes'
-              : latest.cuttingsState === 'left'
-                ? 'no'
-                : 'unknown',
-        });
-        adviceText = [
-          `Cut-timing advice (${advice.version}):`,
-          `Primary: ${advice.primaryRegime.regimeId} — ${advice.primaryRegime.name} (${advice.primaryRegime.monthsDescription}; cut months: ${advice.primaryRegime.cuttingMonths.map((m) => monthName(m)).join(', ')}; cuttings: ${advice.primaryRegime.cuttingsHandling})`,
-          `Fallback: ${advice.fallbackRegime.regimeId} — ${advice.fallbackRegime.name} (${advice.fallbackRegime.monthsDescription})`,
-          `Safety: ${advice.safetyOverlay.description} ${advice.safetyOverlay.junctionsAndBendsNote}`,
-          `Refuge: leave ${advice.refugeGuidance.refugePercentage} uncut in rotation.`,
-        ].join('\n');
-      } catch {
-        adviceText = 'Cut-timing advice could not be calculated from this observation.';
-      }
-    }
-    setPackText(`${evidencePackText(segment, latest, score, INDICATOR_SPECIES)}\n\n${adviceText}\n`);
+    setPack(
+      buildEvidencePack({
+        segments: selectedSegments,
+        observations: selectedObservations,
+        indicators: INDICATOR_SPECIES,
+        councilFacts,
+        isDemo: selectionIsDemo,
+        simulatorText: null,
+      }),
+    );
     setMessage(
       selectedSegmentId === 'all'
-        ? `Evidence pack generated below for ${segmentLabel(segment)} (the first segment). Select one segment to pack that segment specifically. Use your browser print function to print it.`
-        : 'Evidence pack generated below. Use your browser print function to print it.',
+        ? `Evidence pack generated below for all ${selectedSegments.length} selected segment(s).`
+        : 'Evidence pack generated below.',
     );
+  };
+
+  const handleImport = async () => {
+    if (!importFile || importing) return;
+    setImporting(true);
+    setImportSummary(null);
+    setImportErrors([]);
+    try {
+      const text = await importFile.text();
+      const workspace = workspaces[0] ?? (await ensureWorkspace());
+      const options = { fallbackWorkspaceId: workspace.id, indicators: INDICATOR_SPECIES };
+      const parsed = importFile.name.toLowerCase().endsWith('.csv')
+        ? parseCsvImport(text, options)
+        : parseGeoJsonImport(text, options);
+      const errors: ImportRowError[] = [...parsed.errors];
+      let segmentsImported = 0;
+      let observationsImported = 0;
+      for (const segment of parsed.segments) {
+        try {
+          if (await segmentRepo.getById(segment.id)) {
+            errors.push({ row: `Segment ${segment.id}`, message: 'Already stored locally; skipped.' });
+            continue;
+          }
+          await segmentRepo.create(segment);
+          segmentsImported += 1;
+        } catch (err) {
+          errors.push({
+            row: `Segment ${segment.id}`,
+            message: err instanceof Error ? err.message : 'Could not import this segment.',
+          });
+        }
+      }
+      for (const observation of parsed.observations) {
+        try {
+          if (await observationRepo.getById(observation.id)) {
+            errors.push({ row: `Observation ${observation.id}`, message: 'Already stored locally; skipped.' });
+            continue;
+          }
+          await observationRepo.create(observation);
+          observationsImported += 1;
+        } catch (err) {
+          errors.push({
+            row: `Observation ${observation.id}`,
+            message: err instanceof Error ? err.message : 'Could not import this observation.',
+          });
+        }
+      }
+      setImportErrors(errors);
+      setImportSummary(
+        `Imported ${segmentsImported} segment(s) and ${observationsImported} observation(s). ${errors.length} row(s) failed or were skipped — see the list below.`,
+      );
+    } catch {
+      setImportSummary('Could not read that file. Choose a GeoJSON or CSV file in the app export format.');
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-slate-200 pb-4">
+      <div className="border-b border-slate-200 pb-4 no-print">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Download className="h-6 w-6 text-emerald-700" aria-hidden="true" />
           <span>Evidence Pack & Data Export</span>
@@ -125,9 +174,50 @@ export function ExportPage(): React.ReactElement {
 
       {message && <Alert variant="success">{message}</Alert>}
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Import workspace data</CardTitle>
+          <CardDescription>
+            Import a GeoJSON FeatureCollection or a CSV file in the app&apos;s own export format.
+            Every row is validated against the segment and observation schemas; rows that fail
+            are listed below with the reason and are not imported. Demo flags in the file are
+            kept as they are.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 no-print">
+          <label className="block text-sm font-semibold text-slate-800" htmlFor="import-file">
+            File to import (.geojson, .json or .csv)
+          </label>
+          <input
+            id="import-file"
+            type="file"
+            accept=".geojson,.json,.csv"
+            onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+            className="block w-full text-sm"
+          />
+          <Button type="button" onClick={handleImport} disabled={!importFile || importing}>
+            {importing ? 'Importing…' : 'Import file'}
+          </Button>
+          {importSummary && <Alert variant="info">{importSummary}</Alert>}
+          {importErrors.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-slate-900">Rows that failed or were skipped</h3>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                {importErrors.map((err, index) => (
+                  <li key={`${err.row}-${index}`}>
+                    <strong>{err.row}:</strong> {err.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {segments.length === 0 ? (
         <Alert variant="info">
-          No segments recorded yet. Record a survey first, then come back to export it.
+          No segments recorded yet. Record a survey first, or import a file above, then come back
+          to export it.
         </Alert>
       ) : (
         <>
@@ -164,13 +254,26 @@ export function ExportPage(): React.ReactElement {
                 />
                 Include demo segments (normally excluded)
               </label>
+              {includeDemo && (
+                <Alert variant="warning">
+                  Warning: demo segments are included in this export. Demo data is not real
+                  survey data — label it as demo wherever you share it.
+                </Alert>
+              )}
+              {selectionIsDemo && (
+                <Alert variant="warning">
+                  This selection is demo data (its workspace is demo, or every selected segment
+                  is demo), so any evidence pack from it will carry a DEMO watermark and cannot
+                  be exported as a real pack.
+                </Alert>
+              )}
               {anySensitive && (
                 <p className="text-sm text-amber-900">
                   This selection includes sensitive taxa, so its coordinates will be blurred to a
                   1 km grid in the export.
                 </p>
               )}
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 no-print">
                 <Button type="button" onClick={handleGeoJson}>
                   Download GeoJSON
                 </Button>
@@ -184,7 +287,7 @@ export function ExportPage(): React.ReactElement {
             </CardContent>
           </Card>
 
-          <section aria-labelledby="segments-list-heading" className="space-y-4">
+          <section aria-labelledby="segments-list-heading" className="space-y-4 no-print">
             <h2 id="segments-list-heading" className="text-lg font-bold text-slate-900">
               Segments in this export
             </h2>
@@ -205,21 +308,55 @@ export function ExportPage(): React.ReactElement {
             })}
           </section>
 
-          {packText && (
+          {pack && (
             <section aria-labelledby="pack-heading" className="space-y-3">
               <h2 id="pack-heading" className="text-lg font-bold text-slate-900">
                 Evidence pack
               </h2>
+              {pack.isDemo && (
+                <Alert variant="error">
+                  DEMO — NOT A REAL EVIDENCE PACK. This selection is demo data, so a real
+                  (unwatermarked) pack cannot be exported from it. The downloads below are
+                  watermarked demo packs only.
+                </Alert>
+              )}
               <textarea
                 aria-label="Evidence pack text"
                 readOnly
                 rows={28}
                 className="w-full p-4 text-sm rounded-md bg-white border border-slate-300"
-                value={packText}
+                value={pack.plainText}
               />
-              <Button type="button" variant="secondary" onClick={() => window.print()}>
-                Print this page
-              </Button>
+              <div className="flex flex-wrap gap-3 no-print">
+                <Button
+                  type="button"
+                  onClick={() =>
+                    downloadTextFile(
+                      pack.isDemo ? 'verge-ledger-DEMO-evidence-pack.html' : 'verge-ledger-evidence-pack.html',
+                      pack.html,
+                      'text/html',
+                    )
+                  }
+                >
+                  {pack.isDemo ? 'Download DEMO evidence pack (HTML)' : 'Download evidence pack (HTML)'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    downloadTextFile(
+                      pack.isDemo ? 'verge-ledger-DEMO-evidence-pack.md' : 'verge-ledger-evidence-pack.md',
+                      pack.markdown,
+                      'text/markdown',
+                    )
+                  }
+                >
+                  {pack.isDemo ? 'Download DEMO evidence pack (Markdown)' : 'Download evidence pack (Markdown)'}
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => window.print()}>
+                  Print evidence pack (A4)
+                </Button>
+              </div>
             </section>
           )}
         </>

@@ -31,9 +31,13 @@ In v0.1.0, all entries default to `reviewStatus: "needs_expert_review"` until an
 
 ---
 
-## 2. Cut-Regime Guidance (`packages/data/regimes.json`)
+## 2. Cut-Regime Guidance (core constants — there is no `regimes.json` data file)
 
-Cut-regime recommendations (R1, RA, RB, RU) are drawn directly from published grassland management guidance:
+Cut-regime recommendations (R1, RA, RB, RU) live in code, not in a
+data file: `packages/core/src/advisor/constants.ts` (`REGIMES`). There
+is no `packages/data/regimes.json` in this repository, and no regime
+data is loaded from `packages/data`. The recommendations are drawn
+directly from published grassland management guidance:
 
 | Regime ID | Regime Name          | Timing Window                       | Published Basis                                                                                    |
 | --------- | -------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -44,14 +48,25 @@ Cut-regime recommendations (R1, RA, RB, RU) are drawn directly from published gr
 
 ---
 
-## 3. Council Registry Facts (`packages/data/councils.json`)
+## 3. Council Registry Facts (starts empty — there is no `councils.json` data file)
 
-The council registry lists English highway authorities (County Councils and Unitary Authorities) and parish data.
+The council registry starts empty. There is no
+`packages/data/councils.json` in this repository and no council facts
+are pre-filled anywhere: the web app's local council-facts table and
+the optional API's registry both begin with zero records, and the
+Councils page says so explicitly. Facts only appear when a user adds
+one locally with its source, or when one is proposed through the API
+(see below). Nothing in this section should be read as a list of
+English highway authorities — no such list ships with v0.1.0.
 
 - **Verification Requirement**: Every record includes `sourceUrl` and `sourceRetrievedAt` pointing to a primary council web page, highways contract, or published committee report.
 - **Status Meanings**:
   - `verified`: Fact checked against an official council source by maintainers.
   - `unverified`: Fact submitted via community contribution queue awaiting maintainer review.
+- **What does ship**: the only curated dataset in v0.1.0 is the
+  37-entry sourced indicator dataset in §1
+  (`packages/data/indicators.json`). It is not council data, and it
+  does not imply any council fact.
 
 ---
 

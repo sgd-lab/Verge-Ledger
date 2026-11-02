@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Sprout, Menu, X, ShieldAlert } from 'lucide-react';
+import { db } from '../db/schema';
 import { SyncStatusBadge } from '../components/SyncStatusBadge';
 import { useSyncStatus } from '../hooks/useSyncStatus';
 import { cn } from '../lib/utils';
 
 export function RootLayout(): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isDemo = false;
+  const demoSetting = useLiveQuery(() => db.appSettings.get('demoActive'), []);
+  const isDemo = demoSetting?.value === 'true';
   // The header previously hard-coded "Local Only" even if a workspace ever
   // enabled sync. Use the real (currently local-only) status instead.
   const syncStatus = useSyncStatus();
@@ -19,6 +22,8 @@ export function RootLayout(): React.ReactElement {
     { to: '/simulator', label: 'Simulator' },
     { to: '/councils', label: 'Councils' },
     { to: '/export', label: 'Evidence & Export' },
+    { to: '/workspaces', label: 'Workspaces' },
+    { to: '/impact', label: 'Impact' },
   ];
 
   return (

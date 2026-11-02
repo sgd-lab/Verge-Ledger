@@ -13,6 +13,13 @@ export type WidthBand = z.infer<typeof WidthBandEnum>;
 export const SideEnum = z.enum(['left', 'right', 'both', 'unknown']);
 export type Side = z.infer<typeof SideEnum>;
 
+/** Optional physical attributes. All optional so existing segments still validate. */
+export const SlopeEnum = z.enum(['flat', 'gentle', 'steep', 'unknown']);
+export type Slope = z.infer<typeof SlopeEnum>;
+
+export const ShadeEnum = z.enum(['open', 'partial', 'shaded', 'unknown']);
+export type Shade = z.infer<typeof ShadeEnum>;
+
 export const VergeSegmentSchema = z
   .object({
     id: UlidSchema,
@@ -24,6 +31,11 @@ export const VergeSegmentSchema = z
     widthBand: WidthBandEnum,
     side: SideEnum,
     roadName: z.string().nullable().default(null),
+    soilType: z.string().min(1).max(100).optional(),
+    slope: SlopeEnum.optional(),
+    shade: ShadeEnum.optional(),
+    footwayPresence: z.boolean().optional(),
+    sightlineSplay: z.boolean().optional(),
     createdAt: IsoDateTimeSchema,
     updatedAt: IsoDateTimeSchema,
     deletedAt: IsoDateTimeSchema.nullable().default(null),

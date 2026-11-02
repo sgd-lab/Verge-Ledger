@@ -25,6 +25,29 @@
   }
 }
 
+/* Evidence-pack printing: A4, web chrome (header/nav) and on-screen
+   controls suppressed so only the pack itself prints. */
+@page {
+  size: A4;
+  margin: 1.5cm;
+}
+
+@media print {
+  header,
+  nav,
+  footer,
+  [role='banner'],
+  [role='navigation'],
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

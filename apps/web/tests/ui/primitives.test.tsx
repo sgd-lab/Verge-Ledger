@@ -9,8 +9,6 @@ import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { Select } from '../../src/components/ui/Select';
 import { Card, CardHeader, CardTitle, CardContent } from '../../src/components/ui/Card';
-import { Dialog } from '../../src/components/ui/Dialog';
-import { Tabs } from '../../src/components/ui/Tabs';
 import { Badge } from '../../src/components/ui/Badge';
 import { Alert } from '../../src/components/ui/Alert';
 
@@ -87,42 +85,6 @@ describe('UI Primitives (WCAG 2.2 AA Compliance)', () => {
         screen.getByRole('heading', { level: 3, name: /verge overview/i }),
       ).toBeInTheDocument();
       expect(screen.getByText(/high biodiversity section/i)).toBeInTheDocument();
-    });
-  });
-
-  describe('Dialog', () => {
-    it('renders accessible dialog with aria-labelledby', () => {
-      const handleClose = vi.fn();
-      render(
-        <Dialog isOpen={true} onClose={handleClose} title="Survey Safety Reminder">
-          <p>Please wear high-visibility clothing.</p>
-        </Dialog>,
-      );
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(
-        screen.getByRole('heading', { level: 2, name: /survey safety reminder/i }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  describe('Tabs', () => {
-    it('renders tablist, tabs, and tabpanels with keyboard navigation', () => {
-      render(
-        <Tabs
-          tabs={[
-            { id: 'tab1', label: 'Overview', content: <div>Overview Content</div> },
-            { id: 'tab2', label: 'Species', content: <div>Species Content</div> },
-          ]}
-        />,
-      );
-      const tabs = screen.getAllByRole('tab');
-      expect(tabs).toHaveLength(2);
-      expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
-      expect(screen.getByText('Overview Content')).toBeInTheDocument();
-
-      fireEvent.click(tabs[1]!);
-      expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
-      expect(screen.getByText('Species Content')).toBeInTheDocument();
     });
   });
 

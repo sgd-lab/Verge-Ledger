@@ -9,6 +9,22 @@
     />
     <title>Verge Ledger — Road Verge Habitat & Cut-Timing Toolkit</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      Static-build CSP (meta tag). A meta CSP cannot replace real HTTP
+      headers: see deploy/github-pages.md and deploy/hostinger-static.md,
+      which require the host to send the same policy as headers (plus
+      Strict-Transport-Security etc., which a meta tag cannot set).
+      style-src-attr 'unsafe-inline' is deliberate: Leaflet positions map
+      panes with inline styles, so blocking it would break the map. No
+      inline <script> or <style> elements are used by the bundled app.
+      If VITE_API_URL points at an API origin, that origin must be added
+      to connect-src in the host header version of this policy.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.basemaps.cartocdn.com; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    />
+    <meta name="theme-color" content="#065f46" />
   </head>
   <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased">
     <div id="root" class="flex-1 flex flex-col"></div>

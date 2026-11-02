@@ -14,6 +14,33 @@ import { monthName } from '../lib/pageData';
 
 const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
+/**
+ * Illustrative presets from docs/03-method-and-rules.md §6. These are
+ * example schedules only — they are NOT council data and must not be read
+ * as what any council actually cuts.
+ */
+const SIMULATOR_PRESETS: {
+  label: string;
+  scheduleMonths: number[];
+  safetyMonths: number[];
+}[] = [
+  {
+    label: 'Rural road, three cuts: May, July, September',
+    scheduleMonths: [5, 7, 9],
+    safetyMonths: [],
+  },
+  {
+    label: 'Rural road, two cuts: May, September',
+    scheduleMonths: [5, 9],
+    safetyMonths: [],
+  },
+  {
+    label: 'Rural road with one safety cut and two verge cuts',
+    scheduleMonths: [5, 7, 9],
+    safetyMonths: [5],
+  },
+];
+
 export function SimulatorPage(): React.ReactElement {
   const [scheduleMonths, setScheduleMonths] = useState<number[]>([5, 7, 9]);
   const [safetyMonths, setSafetyMonths] = useState<number[]>([5]);
@@ -85,6 +112,34 @@ export function SimulatorPage(): React.ReactElement {
       </div>
 
       {error && <Alert variant="error">{error}</Alert>}
+
+      <section aria-labelledby="sim-presets-heading" className="space-y-3">
+        <h2 id="sim-presets-heading" className="text-lg font-bold text-slate-900">
+          Illustrative presets
+        </h2>
+        <Alert variant="info">
+          These presets are illustrations only, NOT council data. Each button fills the cut
+          inputs below with an example schedule — the May cut in the third preset is marked
+          safety-critical, so it can never be dropped.
+        </Alert>
+        <div className="flex flex-wrap gap-3">
+          {SIMULATOR_PRESETS.map((preset) => (
+            <Button
+              key={preset.label}
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setScheduleMonths(preset.scheduleMonths);
+                setSafetyMonths(preset.safetyMonths);
+                setResult(null);
+                setError(null);
+              }}
+            >
+              {preset.label} (illustration)
+            </Button>
+          ))}
+        </div>
+      </section>
 
       <form
         onSubmit={handleRun}

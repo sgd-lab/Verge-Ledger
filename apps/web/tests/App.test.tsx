@@ -8,11 +8,11 @@ import { describe, it, expect } from 'vitest';
 import { App } from '../src/App';
 
 describe('App Shell & Root Layout', () => {
-  it('renders brand header, navigation links, and skip link', () => {
+  it('renders brand header, navigation links, and skip link', async () => {
     render(<App />);
 
-    // Brand and Version tag
-    expect(screen.getAllByText('Verge Ledger')[0]).toBeInTheDocument();
+    // Brand and Version tag (pages are React.lazy, so wait past Suspense)
+    expect((await screen.findAllByText('Verge Ledger'))[0]).toBeInTheDocument();
     expect(screen.getByText('v0.1.0')).toBeInTheDocument();
 
     // Skip to main content link

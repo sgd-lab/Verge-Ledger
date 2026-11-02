@@ -1,28 +1,53 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RootLayout } from './layouts/RootLayout';
-import { HomePage } from './pages/HomePage';
-import { SurveyPage } from './pages/SurveyPage';
-import { AdvisorPage } from './pages/AdvisorPage';
-import { SimulatorPage } from './pages/SimulatorPage';
-import { CouncilsPage } from './pages/CouncilsPage';
-import { ExportPage } from './pages/ExportPage';
-import { NotFoundPage } from './pages/NotFoundPage';
+
+// Code-split every page route (RootLayout stays eager: it is the shell).
+// Paths and components are unchanged; only the loading mechanism changed.
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
+const SurveyPage = lazy(() =>
+  import('./pages/SurveyPage').then((m) => ({ default: m.SurveyPage })),
+);
+const AdvisorPage = lazy(() =>
+  import('./pages/AdvisorPage').then((m) => ({ default: m.AdvisorPage })),
+);
+const SimulatorPage = lazy(() =>
+  import('./pages/SimulatorPage').then((m) => ({ default: m.SimulatorPage })),
+);
+const CouncilsPage = lazy(() =>
+  import('./pages/CouncilsPage').then((m) => ({ default: m.CouncilsPage })),
+);
+const ExportPage = lazy(() =>
+  import('./pages/ExportPage').then((m) => ({ default: m.ExportPage })),
+);
+const WorkspacesPage = lazy(() =>
+  import('./pages/WorkspacesPage').then((m) => ({ default: m.WorkspacesPage })),
+);
+const ImpactPage = lazy(() =>
+  import('./pages/ImpactPage').then((m) => ({ default: m.ImpactPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+);
 
 export function App(): React.ReactElement {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<RootLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="survey" element={<SurveyPage />} />
-          <Route path="advisor" element={<AdvisorPage />} />
-          <Route path="simulator" element={<SimulatorPage />} />
-          <Route path="councils" element={<CouncilsPage />} />
-          <Route path="export" element={<ExportPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<p className="p-6 text-sm text-slate-600">Loading…</p>}>
+        <Routes>
+          <Route path="/" element={<RootLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="survey" element={<SurveyPage />} />
+            <Route path="advisor" element={<AdvisorPage />} />
+            <Route path="simulator" element={<SimulatorPage />} />
+            <Route path="councils" element={<CouncilsPage />} />
+            <Route path="export" element={<ExportPage />} />
+            <Route path="workspaces" element={<WorkspacesPage />} />
+            <Route path="impact" element={<ImpactPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Compass } from 'lucide-react';
 import { INDICATOR_SPECIES } from '@verge-ledger/data';
 import {
@@ -10,7 +11,9 @@ import {
   type ForbCountBand,
   type RoadClass,
   type Setting,
+  type Shade,
   type Side,
+  type Slope,
   type SwardStructure,
   type WidthBand,
 } from '@verge-ledger/core';
@@ -20,25 +23,59 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
-import { CoordinateEntryForm, type CoordinateEntryResult } from '../components/survey/CoordinateEntryForm';
+import {
+  CoordinateEntryForm,
+  type CoordinateEntryResult,
+} from '../components/survey/CoordinateEntryForm';
 import { VergeMap } from '../components/map/VergeMap';
 import { SegmentLayer } from '../components/map/SegmentLayer';
 import { DrawingToolbar } from '../components/map/DrawingToolbar';
 import { GpsMarker } from '../components/map/GpsMarker';
 import { useSegmentDrawing } from '../hooks/useSegmentDrawing';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { db } from '../db/schema';
 import { segmentRepo } from '../db/repositories/SegmentRepository';
 import { observationRepo } from '../db/repositories/ObservationRepository';
+import { draftRepo } from '../db/repositories/DraftRepository';
+import { photoRepo } from '../db/repositories/PhotoRepository';
 import { ensureWorkspace, useSurveyData } from '../hooks/useSurveyData';
 import {
   FORB_BAND_LABELS,
   SWARD_LABELS,
   WIDTH_LABELS,
+  hasSensitiveTaxa,
   indicatorById,
   latestObservationsBySegment,
   scoreForObservation,
   segmentLabel,
 } from '../lib/pageData';
+
+const SAFETY_COPY =
+  'Survey from a safe position. Never stand on the carriageway. Never cut/damage a verge without written permission. Do not trespass.';
+
+function triStateToBoolean(value: string): boolean | undefined {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}
+
+function booleanToTriState(value: boolean | undefined): string {
+  if (value === true) return 'true';
+  if (value === false) return 'false';
+  return '';
+}
+
+function draftString(data: Record<string, unknown>, key: string): string {
+  const value = data[key];
+  return typeof value === 'string' ? value : '';
+}
+
+function draftStringArray(data: Record<string, unknown>, key: string): string[] {
+  const value = data[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
 
 const POSITIVE_INDICATORS = INDICATOR_SPECIES.filter((s) => s.group !== 'nutrient_enrichment');
 const NUTRIENT_DOMINANTS = INDICATOR_SPECIES.filter((s) => s.group === 'nutrient_enrichment');
@@ -56,9 +93,40 @@ export function SurveyPage(): React.ReactElement {
   const [widthBand, setWidthBand] = useState<WidthBand>('1_5_to_3');
   const [side, setSide] = useState<Side>('unknown');
   const [roadName, setRoadName] = useState('');
+  const [soilType, setSoilType] = useState('');
+  const [slope, setSlope] = useState<string>('');
+  const [shade, setShade] = useState<string>('');
+  const [footwayPresence, setFootwayPresence] = useState<string>('');
+  const [sightlineSplay, setSightlineSplay] = useState<string>('');
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+
+  // Segment edit (soft-delete only; see handleDeleteSegment).
+  const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
+  const [editRoadName, setEditRoadName] = useState('');
+  const [editRoadClass, setEditRoadClass] = useState<RoadClass>('U');
+  const [editSetting, setEditSetting] = useState<Setting>('rural');
+  const [editWidthBand, setEditWidthBand] = useState<WidthBand>('1_5_to_3');
+  const [editSide, setEditSide] = useState<Side>('unknown');
+  const [editSoilType, setEditSoilType] = useState('');
+  const [editSlope, setEditSlope] = useState<string>('');
+  const [editShade, setEditShade] = useState<string>('');
+  const [editFootway, setEditFootway] = useState<string>('');
+  const [editSplay, setEditSplay] = useState<string>('');
+
+  // Safety acknowledgement (SUR-6): persisted in appSettings.
+  const safetySetting = useLiveQuery(() => db.appSettings.get('safetyAcknowledged'), []);
+  const safetyAcknowledged = safetySetting?.value === 'true' || safetySetting?.value === true;
+
+  // Draft auto-save / resume.
+  const [draftData, setDraftData] = useState<Record<string, unknown> | null>(null);
+  const [draftGate, setDraftGate] = useState<'loading' | 'blocked' | 'open'>('loading');
+  const draftLoadedRef = useRef(false);
+
+  // Photos pending upload for the next observation (max 3).
+  const [pendingPhotos, setPendingPhotos] = useState<{ name: string; blob: Blob }[]>([]);
+  const [photoCounts, setPhotoCounts] = useState<Record<string, number>>({});
 
   const [forbBand, setForbBand] = useState<ForbCountBand>('3_5');
   const [indicatorIds, setIndicatorIds] = useState<string[]>([]);
@@ -88,6 +156,74 @@ export function SurveyPage(): React.ReactElement {
       setStartAtGpsPending(false);
     }
   }, [startAtGpsPending, geo.coords, drawing]);
+
+  // Load any saved draft once. If one exists, auto-save stays blocked until
+  // the user resumes or discards it, so empty defaults never overwrite it.
+  useEffect(() => {
+    if (draftLoadedRef.current) return;
+    draftLoadedRef.current = true;
+    void draftRepo
+      .getDraft()
+      .then((draft) => {
+        if (draft) {
+          setDraftData(draft.data);
+          setDraftGate('blocked');
+        } else {
+          setDraftGate('open');
+        }
+      })
+      .catch(() => setDraftGate('open'));
+  }, []);
+
+  // Draft auto-save: persist the in-progress survey form locally.
+  useEffect(() => {
+    if (draftGate !== 'open') return;
+    const timer = window.setTimeout(() => {
+      void draftRepo.saveDraft(1, {
+        roadName,
+        soilType,
+        slope,
+        shade,
+        footwayPresence,
+        sightlineSplay,
+        roadClass,
+        setting,
+        widthBand,
+        side,
+        selectedSegmentId,
+        forbBand,
+        indicatorIds,
+        nutrientIds,
+        sward,
+        cutState,
+        cuttingsState,
+        lastCutMonth,
+        notes,
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [
+    draftGate,
+    roadName,
+    soilType,
+    slope,
+    shade,
+    footwayPresence,
+    sightlineSplay,
+    roadClass,
+    setting,
+    widthBand,
+    side,
+    selectedSegmentId,
+    forbBand,
+    indicatorIds,
+    nutrientIds,
+    sward,
+    cutState,
+    cuttingsState,
+    lastCutMonth,
+    notes,
+  ]);
 
   const handleSelectSegment = useCallback((id: string) => {
     setSelectedSegmentId(id);
@@ -121,6 +257,163 @@ export function SurveyPage(): React.ReactElement {
     [observations, selectedSegment],
   );
 
+  useEffect(() => {
+    if (selectedObservations.length === 0) return;
+    void (async () => {
+      const counts: Record<string, number> = {};
+      for (const obs of selectedObservations) {
+        counts[obs.id] = (await photoRepo.listByObservation(obs.id)).length;
+      }
+      setPhotoCounts((prev) => ({ ...prev, ...counts }));
+    })();
+  }, [selectedObservations]);
+
+  const handleAcknowledgeSafety = async () => {
+    await db.appSettings.put({ key: 'safetyAcknowledged', value: 'true' });
+  };
+
+  const handleResumeDraft = () => {
+    if (!draftData) return;
+    setRoadName(draftString(draftData, 'roadName'));
+    setSoilType(draftString(draftData, 'soilType'));
+    setSlope(draftString(draftData, 'slope'));
+    setShade(draftString(draftData, 'shade'));
+    setFootwayPresence(draftString(draftData, 'footwayPresence'));
+    setSightlineSplay(draftString(draftData, 'sightlineSplay'));
+    const rc = draftString(draftData, 'roadClass');
+    if (rc) setRoadClass(rc as RoadClass);
+    const st = draftString(draftData, 'setting');
+    if (st) setSetting(st as Setting);
+    const wb = draftString(draftData, 'widthBand');
+    if (wb) setWidthBand(wb as WidthBand);
+    const sd = draftString(draftData, 'side');
+    if (sd) setSide(sd as Side);
+    const segId = draftString(draftData, 'selectedSegmentId');
+    if (segId) setSelectedSegmentId(segId);
+    const fb = draftString(draftData, 'forbBand');
+    if (fb) setForbBand(fb as ForbCountBand);
+    setIndicatorIds(draftStringArray(draftData, 'indicatorIds'));
+    setNutrientIds(draftStringArray(draftData, 'nutrientIds'));
+    const sw = draftString(draftData, 'sward');
+    if (sw) setSward(sw as SwardStructure);
+    const cs = draftString(draftData, 'cutState');
+    if (cs) setCutState(cs as CutState);
+    const ct = draftString(draftData, 'cuttingsState');
+    if (ct) setCuttingsState(ct as CuttingsState);
+    setLastCutMonth(draftString(draftData, 'lastCutMonth'));
+    setNotes(draftString(draftData, 'notes'));
+    setDraftData(null);
+    setDraftGate('open');
+    setSavedMessage('Draft resumed.');
+  };
+
+  const handleDiscardDraft = async () => {
+    await draftRepo.clearDraft();
+    setDraftData(null);
+    setDraftGate('open');
+  };
+
+  const handlePhotoSelect = async (files: FileList | null) => {
+    if (!files) return;
+    setError(null);
+    const chosen = Array.from(files);
+    if (pendingPhotos.length + chosen.length > 3) {
+      setError('Maximum of 3 photos per observation.');
+      return;
+    }
+    try {
+      const processed: { name: string; blob: Blob }[] = [];
+      for (const file of chosen) {
+        // Strip EXIF by canvas re-encode before the photo is stored.
+        const result = await photoRepo.stripExifAndProcess(file);
+        processed.push({ name: file.name, blob: result.blob });
+      }
+      setPendingPhotos((prev) => [...prev, ...processed]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not process the photo.');
+    }
+  };
+
+  const handleAddPhotosToObservation = async (observationId: string, files: FileList | null) => {
+    if (!files) return;
+    setError(null);
+    try {
+      const existing = await photoRepo.listByObservation(observationId);
+      if (existing.length + files.length > 3) {
+        setError('Maximum of 3 photos per observation.');
+        return;
+      }
+      for (const file of Array.from(files)) {
+        await photoRepo.savePhoto({ observationId, file });
+      }
+      const updated = await photoRepo.listByObservation(observationId);
+      setPhotoCounts((prev) => ({ ...prev, [observationId]: updated.length }));
+      setSavedMessage('Photo saved. Photos are stored locally only.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save the photo.');
+    }
+  };
+
+  const startEditSegment = (segment: (typeof segments)[number]) => {
+    setEditingSegmentId(segment.id);
+    setEditRoadName(segment.roadName ?? '');
+    setEditRoadClass(segment.roadClass);
+    setEditSetting(segment.setting);
+    setEditWidthBand(segment.widthBand);
+    setEditSide(segment.side);
+    setEditSoilType(segment.soilType ?? '');
+    setEditSlope(segment.slope ?? '');
+    setEditShade(segment.shade ?? '');
+    setEditFootway(booleanToTriState(segment.footwayPresence));
+    setEditSplay(booleanToTriState(segment.sightlineSplay));
+  };
+
+  const handleUpdateSegment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingSegmentId) return;
+    setError(null);
+    try {
+      const updates: Parameters<typeof segmentRepo.update>[1] = {
+        roadName: editRoadName.trim() ? editRoadName.trim() : null,
+        roadClass: editRoadClass,
+        setting: editSetting,
+        widthBand: editWidthBand,
+        side: editSide,
+      };
+      if (editSoilType.trim()) updates.soilType = editSoilType.trim();
+      if (editSlope) updates.slope = editSlope as Slope;
+      if (editShade) updates.shade = editShade as Shade;
+      const footway = triStateToBoolean(editFootway);
+      if (footway !== undefined) updates.footwayPresence = footway;
+      const splay = triStateToBoolean(editSplay);
+      if (splay !== undefined) updates.sightlineSplay = splay;
+      await segmentRepo.update(editingSegmentId, updates);
+      setEditingSegmentId(null);
+      setSavedMessage('Segment updated.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the segment.');
+    }
+  };
+
+  const handleDeleteSegment = async (id: string) => {
+    if (
+      !window.confirm(
+        'Delete this segment? It will be kept as a deleted record, not removed outright.',
+      )
+    ) {
+      return;
+    }
+    try {
+      // Soft delete (tombstone via deletedAt). Never the hard-delete cascade here.
+      await segmentRepo.softDelete(id);
+      if (selectedSegmentId === id) setSelectedSegmentId(null);
+      if (editingSegmentId === id) setEditingSegmentId(null);
+      setSavedMessage('Segment deleted.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete the segment.');
+    }
+  };
+
   const handleCreateSegment = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -140,11 +433,21 @@ export function SurveyPage(): React.ReactElement {
         widthBand,
         side,
         roadName: roadName.trim() ? roadName.trim() : null,
+        soilType: soilType.trim() ? soilType.trim() : undefined,
+        slope: slope ? (slope as Slope) : undefined,
+        shade: shade ? (shade as Shade) : undefined,
+        footwayPresence: triStateToBoolean(footwayPresence),
+        sightlineSplay: triStateToBoolean(sightlineSplay),
         isDemo: false,
       });
       setSelectedSegmentId(created.id);
       setGeometry(null);
       setRoadName('');
+      setSoilType('');
+      setSlope('');
+      setShade('');
+      setFootwayPresence('');
+      setSightlineSplay('');
       setShowSegmentForm(false);
       setSavedMessage(`Segment saved (${created.lengthM} m). Now add a survey observation below.`);
     } catch (err) {
@@ -174,7 +477,7 @@ export function SurveyPage(): React.ReactElement {
         lastCutMonth: lastCutMonth ? Number(lastCutMonth) : null,
       });
       const now = new Date().toISOString();
-      await observationRepo.create({
+      const createdObservation = await observationRepo.create({
         segmentId: selectedSegment.id,
         observedAt: now,
         forbCountBand: forbBand,
@@ -190,6 +493,15 @@ export function SurveyPage(): React.ReactElement {
         scoreResult,
         isDemo: false,
       });
+      // Attach pending photos (already EXIF-stripped on selection; savePhoto
+      // strips again on storage). Enforced at max 3 by the photo picker.
+      // Photos are linked by observationId; the observation itself is not
+      // re-saved here because re-scoring on update would change its score.
+      for (const photo of pendingPhotos) {
+        await photoRepo.savePhoto({ observationId: createdObservation.id, file: photo.blob });
+      }
+      setPendingPhotos([]);
+      await draftRepo.clearDraft();
       setIndicatorIds([]);
       setNutrientIds([]);
       setNotes('');
@@ -210,11 +522,48 @@ export function SurveyPage(): React.ReactElement {
           <span>Five-Minute Road Verge Survey</span>
         </h1>
         <p className="text-sm text-slate-600 mt-1">
-          Record a segment, then add what you saw. Everything is stored on this device only.
-          Survey from a safe position, on a footway or verge with clear sightlines. Never stand on
-          the carriageway, and never survey fast roads.
+          Record a segment, then add what you saw. Everything is stored on this device only. Survey
+          from a safe position, on a footway or verge with clear sightlines. Never stand on the
+          carriageway, and never survey fast roads.
         </p>
       </div>
+
+      {!safetyAcknowledged && (
+        <Alert variant="warning" title="Before you survey — please acknowledge">
+          <p>{SAFETY_COPY}</p>
+          <p className="mt-2">
+            Survey from a safe position, avoid fast roads, and keep highway safety rules above any
+            recommendation.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            className="mt-2"
+            onClick={() => void handleAcknowledgeSafety()}
+          >
+            I understand — acknowledge once
+          </Button>
+        </Alert>
+      )}
+
+      {draftData && (
+        <Alert variant="info" title="Unfinished survey draft found">
+          <p>Your in-progress survey was saved on this device. Resume it, or discard it.</p>
+          <div className="flex gap-2 mt-2">
+            <Button type="button" size="sm" onClick={handleResumeDraft}>
+              Resume draft
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => void handleDiscardDraft()}
+            >
+              Discard draft
+            </Button>
+          </div>
+        </Alert>
+      )}
 
       {error && <Alert variant="error">{error}</Alert>}
       {savedMessage && <Alert variant="success">{savedMessage}</Alert>}
@@ -292,15 +641,14 @@ export function SurveyPage(): React.ReactElement {
               </VergeMap>
             ) : (
               <p className="text-sm text-slate-600">
-                Coordinate entry is in the “New segment” form below — open it with “Add a
-                segment”. The map is the faster way: tap “Draw on map”, then tap the map to
-                place points.
+                Coordinate entry is in the “New segment” form below — open it with “Add a segment”.
+                The map is the faster way: tap “Draw on map”, then tap the map to place points.
               </p>
             )}
             {geo.error && <Alert variant="error">{geo.error}</Alert>}
             <p className="text-xs text-slate-600">
-              Tap a saved verge on the map to select it. Map tiles are from OpenStreetMap; if
-              tiles fail to load, a fallback map style is used automatically.
+              Tap a saved verge on the map to select it. Map tiles are from OpenStreetMap; if tiles
+              fail to load, a fallback map style is used automatically.
             </p>
           </section>
 
@@ -336,6 +684,23 @@ export function SurveyPage(): React.ReactElement {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-3">
+                        {(segment.soilType ||
+                          segment.slope ||
+                          segment.shade ||
+                          segment.footwayPresence !== undefined ||
+                          segment.sightlineSplay !== undefined) && (
+                          <p className="text-sm text-slate-600">
+                            {segment.soilType ? `Soil: ${segment.soilType}. ` : ''}
+                            {segment.slope ? `Slope: ${segment.slope}. ` : ''}
+                            {segment.shade ? `Shade: ${segment.shade}. ` : ''}
+                            {segment.footwayPresence !== undefined
+                              ? `Footway: ${segment.footwayPresence ? 'present' : 'absent'}. `
+                              : ''}
+                            {segment.sightlineSplay !== undefined
+                              ? `Sightline splay: ${segment.sightlineSplay ? 'yes' : 'no'}.`
+                              : ''}
+                          </p>
+                        )}
                         {score ? (
                           <p className="text-sm">
                             Latest score:{' '}
@@ -355,14 +720,32 @@ export function SurveyPage(): React.ReactElement {
                         ) : (
                           <p className="text-sm text-slate-600">No observation recorded yet.</p>
                         )}
-                        <Button
-                          type="button"
-                          variant={isSelected ? 'primary' : 'secondary'}
-                          size="sm"
-                          onClick={() => setSelectedSegmentId(segment.id)}
-                        >
-                          {isSelected ? 'Selected' : 'Select for survey'}
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant={isSelected ? 'primary' : 'secondary'}
+                            size="sm"
+                            onClick={() => setSelectedSegmentId(segment.id)}
+                          >
+                            {isSelected ? 'Selected' : 'Select for survey'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => startEditSegment(segment)}
+                          >
+                            Edit segment
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => void handleDeleteSegment(segment.id)}
+                          >
+                            Delete segment
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   );
@@ -370,6 +753,142 @@ export function SurveyPage(): React.ReactElement {
               </div>
             )}
           </section>
+
+          {editingSegmentId && (
+            <section aria-labelledby="edit-segment-heading" className="space-y-4">
+              <h2 id="edit-segment-heading" className="text-lg font-bold text-slate-900">
+                Edit segment
+              </h2>
+              <form
+                onSubmit={handleUpdateSegment}
+                className="bg-white p-6 rounded-lg border border-slate-200 space-y-4"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    id="edit-road-name"
+                    label="Road name (optional)"
+                    value={editRoadName}
+                    onChange={(e) => setEditRoadName(e.target.value)}
+                  />
+                  <Select
+                    id="edit-road-class"
+                    label="Road class"
+                    value={editRoadClass}
+                    onChange={(e) => setEditRoadClass(e.target.value as RoadClass)}
+                    options={[
+                      { value: 'A', label: 'A road' },
+                      { value: 'B', label: 'B road' },
+                      { value: 'C', label: 'C road' },
+                      { value: 'U', label: 'Unclassified' },
+                      { value: 'unknown', label: 'Unknown' },
+                    ]}
+                    required
+                  />
+                  <Select
+                    id="edit-setting"
+                    label="Setting"
+                    value={editSetting}
+                    onChange={(e) => setEditSetting(e.target.value as Setting)}
+                    options={[
+                      { value: 'rural', label: 'Rural' },
+                      { value: 'urban', label: 'Urban' },
+                    ]}
+                    required
+                  />
+                  <Select
+                    id="edit-width-band"
+                    label="Verge width"
+                    value={editWidthBand}
+                    onChange={(e) => setEditWidthBand(e.target.value as WidthBand)}
+                    options={[
+                      { value: 'lt1_5', label: 'Under 1.5 m' },
+                      { value: '1_5_to_3', label: '1.5–3 m' },
+                      { value: 'gt3', label: 'Over 3 m' },
+                    ]}
+                    required
+                  />
+                  <Select
+                    id="edit-side"
+                    label="Side of road"
+                    value={editSide}
+                    onChange={(e) => setEditSide(e.target.value as Side)}
+                    options={[
+                      { value: 'left', label: 'Left' },
+                      { value: 'right', label: 'Right' },
+                      { value: 'both', label: 'Both sides' },
+                      { value: 'unknown', label: 'Unknown' },
+                    ]}
+                    required
+                  />
+                  <Input
+                    id="edit-soil-type"
+                    label="Soil type (optional)"
+                    placeholder="e.g. clay, chalk, sandy"
+                    value={editSoilType}
+                    onChange={(e) => setEditSoilType(e.target.value)}
+                  />
+                  <Select
+                    id="edit-slope"
+                    label="Slope (optional)"
+                    value={editSlope}
+                    onChange={(e) => setEditSlope(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'flat', label: 'Flat' },
+                      { value: 'gentle', label: 'Gentle' },
+                      { value: 'steep', label: 'Steep' },
+                      { value: 'unknown', label: 'Unknown' },
+                    ]}
+                  />
+                  <Select
+                    id="edit-shade"
+                    label="Shade (optional)"
+                    value={editShade}
+                    onChange={(e) => setEditShade(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'open', label: 'Open' },
+                      { value: 'partial', label: 'Partial shade' },
+                      { value: 'shaded', label: 'Shaded' },
+                      { value: 'unknown', label: 'Unknown' },
+                    ]}
+                  />
+                  <Select
+                    id="edit-footway"
+                    label="Footway present (optional)"
+                    value={editFootway}
+                    onChange={(e) => setEditFootway(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'true', label: 'Yes' },
+                      { value: 'false', label: 'No' },
+                    ]}
+                  />
+                  <Select
+                    id="edit-splay"
+                    label="Sightline splay present (optional)"
+                    value={editSplay}
+                    onChange={(e) => setEditSplay(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'true', label: 'Yes' },
+                      { value: 'false', label: 'No' },
+                    ]}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit">Save segment changes</Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setEditingSegmentId(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </section>
+          )}
 
           {showSegmentForm && (
             <section aria-labelledby="new-segment-heading" className="space-y-4">
@@ -386,9 +905,8 @@ export function SurveyPage(): React.ReactElement {
                 />
               ) : (
                 <Alert variant="info">
-                  Draw the segment on the map above (Draw Verge Segment, then Complete
-                  Segment), or switch to “Enter coordinates” at the top of the map to type
-                  coordinates instead.
+                  Draw the segment on the map above (Draw Verge Segment, then Complete Segment), or
+                  switch to “Enter coordinates” at the top of the map to type coordinates instead.
                 </Alert>
               )}
               {geometry && (
@@ -458,13 +976,69 @@ export function SurveyPage(): React.ReactElement {
                     ]}
                     required
                   />
+                  <Input
+                    id="soil-type"
+                    label="Soil type (optional)"
+                    placeholder="e.g. clay, chalk, sandy"
+                    value={soilType}
+                    onChange={(e) => setSoilType(e.target.value)}
+                  />
+                  <Select
+                    id="slope"
+                    label="Slope (optional)"
+                    value={slope}
+                    onChange={(e) => setSlope(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'flat', label: 'Flat' },
+                      { value: 'gentle', label: 'Gentle' },
+                      { value: 'steep', label: 'Steep' },
+                      { value: 'unknown', label: 'Unknown' },
+                    ]}
+                  />
+                  <Select
+                    id="shade"
+                    label="Shade (optional)"
+                    value={shade}
+                    onChange={(e) => setShade(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'open', label: 'Open' },
+                      { value: 'partial', label: 'Partial shade' },
+                      { value: 'shaded', label: 'Shaded' },
+                      { value: 'unknown', label: 'Unknown' },
+                    ]}
+                  />
+                  <Select
+                    id="footway-presence"
+                    label="Footway present (optional)"
+                    value={footwayPresence}
+                    onChange={(e) => setFootwayPresence(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'true', label: 'Yes' },
+                      { value: 'false', label: 'No' },
+                    ]}
+                  />
+                  <Select
+                    id="sightline-splay"
+                    label="Sightline splay present (optional)"
+                    value={sightlineSplay}
+                    onChange={(e) => setSightlineSplay(e.target.value)}
+                    options={[
+                      { value: '', label: 'Not recorded' },
+                      { value: 'true', label: 'Yes' },
+                      { value: 'false', label: 'No' },
+                    ]}
+                  />
                 </div>
                 <Button type="submit" disabled={!geometry}>
                   Save segment
                 </Button>
                 {!geometry && (
                   <p className="text-xs text-slate-600">
-                    Confirm the coordinates above first — the form needs a checked length of 5–500 m.
+                    Confirm the coordinates above first — the form needs a checked length of 5–500
+                    m.
                   </p>
                 )}
               </form>
@@ -476,6 +1050,17 @@ export function SurveyPage(): React.ReactElement {
               <h2 id="observation-heading" className="text-lg font-bold text-slate-900">
                 Add an observation — {segmentLabel(selectedSegment)}
               </h2>
+              <Alert variant="warning">
+                <p>Reminder for every survey: {SAFETY_COPY}</p>
+              </Alert>
+              {hasSensitiveTaxa(INDICATOR_SPECIES, [...indicatorIds, ...nutrientIds]) && (
+                <Alert variant="warning" title="Sensitive species selected">
+                  <p>
+                    A sensitive species (or orchid) is selected. Public exports coarsen its location
+                    to 1 km, so its precise location is never shown publicly.
+                  </p>
+                </Alert>
+              )}
               <form
                 onSubmit={handleCreateObservation}
                 className="bg-white p-6 rounded-lg border border-slate-200 space-y-6"
@@ -566,7 +1151,9 @@ export function SurveyPage(): React.ReactElement {
                         <span>
                           {species.commonName}{' '}
                           <span className="text-slate-500">({species.scientificName})</span>
-                          {species.sensitive && <span className="text-amber-800"> · sensitive</span>}
+                          {species.sensitive && (
+                            <span className="text-amber-800"> · sensitive</span>
+                          )}
                         </span>
                       </label>
                     ))}
@@ -593,6 +1180,55 @@ export function SurveyPage(): React.ReactElement {
                       </label>
                     ))}
                   </div>
+                </fieldset>
+
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-semibold text-slate-800">
+                    Photos (optional, max 3 per observation)
+                  </legend>
+                  <p className="text-xs text-slate-600">
+                    Photos are stored locally only. EXIF location data is stripped on processing and
+                    on export.
+                  </p>
+                  <label
+                    className="block text-sm font-semibold text-slate-800"
+                    htmlFor="observation-photos"
+                  >
+                    Take a photo or choose files
+                  </label>
+                  <input
+                    id="observation-photos"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    className="block w-full text-sm text-slate-700"
+                    onChange={(e) => void handlePhotoSelect(e.target.files)}
+                  />
+                  {pendingPhotos.length > 0 && (
+                    <ul className="space-y-1 text-sm">
+                      {pendingPhotos.map((photo, index) => (
+                        <li
+                          key={`${photo.name}-${index}`}
+                          className="flex items-center justify-between gap-2"
+                        >
+                          <span>
+                            {photo.name} — will be attached when you save this observation.
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              setPendingPhotos((prev) => prev.filter((_, i) => i !== index))
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </fieldset>
 
                 <Button type="submit">Save observation and score it</Button>
@@ -634,6 +1270,27 @@ export function SurveyPage(): React.ReactElement {
                             .join(', ') || 'none recorded'}
                         </p>
                         {obs.notes && <p>Notes: {obs.notes}</p>}
+                        <p>
+                          Photos: {photoCounts[obs.id] ?? 0} of 3 (stored locally only; EXIF
+                          stripped on processing and on export).
+                        </p>
+                        <label
+                          className="block text-sm font-semibold text-slate-800"
+                          htmlFor={`photos-${obs.id}`}
+                        >
+                          Add photos to this observation (max 3 in total)
+                        </label>
+                        <input
+                          id={`photos-${obs.id}`}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          multiple
+                          className="block w-full text-sm text-slate-700"
+                          onChange={(e) =>
+                            void handleAddPhotosToObservation(obs.id, e.target.files)
+                          }
+                        />
                         {score && (
                           <>
                             <ul className="list-disc pl-5 space-y-1">

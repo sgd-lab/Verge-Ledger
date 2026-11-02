@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sprout, Compass, Calculator, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
+import { Alert } from '../components/ui/Alert';
+import { loadDemoWorkspace } from '../lib/demo';
 
 export function HomePage(): React.ReactElement {
+  const [demoMessage, setDemoMessage] = useState<string | null>(null);
+  const [demoError, setDemoError] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleLoadDemo = async () => {
+    setDemoMessage(null);
+    setDemoError(null);
+    setDemoLoading(true);
+    try {
+      const workspace = await loadDemoWorkspace();
+      setDemoMessage(
+        `Demo workspace “${workspace.name}” loaded with synthetic segments. Demo data is labelled DEMO and excluded from impact counters.`,
+      );
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : 'Could not load the demo workspace.');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
   return (
     <div className="space-y-8">
       {/* Hero Section */}
@@ -38,7 +59,19 @@ export function HomePage(): React.ReactElement {
                 <span>Cut-Timing Advisor</span>
               </Button>
             </Link>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="border-emerald-300 text-emerald-100 hover:bg-emerald-800"
+              onClick={() => void handleLoadDemo()}
+              disabled={demoLoading}
+            >
+              <span>{demoLoading ? 'Loading demo…' : 'Load demo workspace'}</span>
+            </Button>
           </div>
+          {demoMessage && <Alert variant="success">{demoMessage}</Alert>}
+          {demoError && <Alert variant="error">{demoError}</Alert>}
         </div>
       </section>
 
