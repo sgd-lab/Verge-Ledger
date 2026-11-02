@@ -122,7 +122,7 @@ export function CoordinateEntryForm({
         </h2>
         <p className="text-sm text-slate-600 mt-1">
           Enter decimal degrees (WGS84) for the start and end points of the verge. Representative
-          sample should be at least 10 m and maximum 500 m.
+          sample should be at least 5 m and maximum 500 m.
         </p>
       </div>
 

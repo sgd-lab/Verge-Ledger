@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Position } from '@verge-ledger/core';
 import { calculateLineStringLength, validateSegmentLength } from '@verge-ledger/core';
 
@@ -18,8 +18,18 @@ export function useSegmentDrawing() {
     setRubberBandPoint(null);
   }, []);
 
+  // Throttle mousemove updates to one per animation frame. Leaflet fires
+  // mousemove far more often than the screen refreshes, and every update
+  // re-rendered the drawing layer — a direct cause of map lag while drawing.
+  const rafRef = useRef(0);
+  const pendingRef = useRef<Position | null>(null);
   const updateRubberBand = useCallback((point: Position) => {
-    setRubberBandPoint(point);
+    pendingRef.current = point;
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      if (pendingRef.current) setRubberBandPoint(pendingRef.current);
+    });
   }, []);
 
   const undoPoint = useCallback(() => {

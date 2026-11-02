@@ -16,8 +16,10 @@ export interface VergeMapProps {
   children?: React.ReactNode;
 }
 
+const DEFAULT_CENTER: [number, number] = [52.5, -1.5];
+
 export const VergeMap: React.FC<VergeMapProps> = ({
-  center = [52.5, -1.5],
+  center = DEFAULT_CENTER,
   zoom = 7,
   tileUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TILE_URL) ||
     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -29,6 +31,7 @@ export const VergeMap: React.FC<VergeMapProps> = ({
   children,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const [map, setMap] = useState<L.Map | null>(null);
 
   const onMapClickRef = useRef(onMapClick);
@@ -40,18 +43,24 @@ export const VergeMap: React.FC<VergeMapProps> = ({
   const onMapDoubleClickRef = useRef(onMapDoubleClick);
   onMapDoubleClickRef.current = onMapDoubleClick;
 
+  // Create the map exactly once. Previously this effect re-ran whenever the
+  // parent passed a new center array / zoom, destroying the map, dropping
+  // all tiles and layers, and re-downloading everything — the main cause of
+  // the map feeling laggy and flickering on every render.
   useEffect(() => {
     initLeafletIcons();
-    if (!containerRef.current) return;
+    if (!containerRef.current || mapRef.current) return;
 
     const mapInstance = L.map(containerRef.current, {
-      center,
-      zoom,
+      center: DEFAULT_CENTER,
+      zoom: 7,
       zoomControl: true,
-      attributionControl: false, // Customized below to ensure visibility
+      attributionControl: false,
+      // Canvas rendering keeps many polylines cheap; the default SVG
+      // renderer creates a DOM node per segment and slows panning.
+      preferCanvas: true,
     });
 
-    // Mandatory OSM Attribution Control (MAP-3)
     L.control
       .attribution({ position: 'bottomright', prefix: false })
       .addAttribution(
@@ -59,50 +68,90 @@ export const VergeMap: React.FC<VergeMapProps> = ({
       )
       .addTo(mapInstance);
 
-    // Primary Tile Layer with CartoDB Fallback
-    let tileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      minZoom: 6,
-      subdomains: ['a', 'b', 'c'],
-    }).addTo(mapInstance);
+    // Tile layer with a one-time fallback. The fallback layer gets the same
+    // error handling, and the counter resets on any successful load, so a
+    // few stray tile errors do not permanently switch the source.
+    let fellBack = false;
+    const makeTiles = (url: string): L.TileLayer => {
+      const layer = L.tileLayer(url, { maxZoom: 19, minZoom: 6, subdomains: ['a', 'b', 'c'] });
+      let consecutiveErrors = 0;
+      layer.on('tileerror', () => {
+        consecutiveErrors++;
+        if (consecutiveErrors >= 5 && !fellBack) {
+          fellBack = true;
+          mapInstance.removeLayer(layer);
+          makeTiles(fallbackTileUrl).addTo(mapInstance);
+        }
+      });
+      layer.on('tileload', () => {
+        consecutiveErrors = 0;
+      });
+      return layer;
+    };
+    makeTiles(tileUrl).addTo(mapInstance);
 
-    let consecutiveErrors = 0;
-    tileLayer.on('tileerror', () => {
-      consecutiveErrors++;
-      if (consecutiveErrors >= 5) {
-        mapInstance.removeLayer(tileLayer);
-        tileLayer = L.tileLayer(fallbackTileUrl, {
-          maxZoom: 19,
-          minZoom: 6,
-          subdomains: ['a', 'b', 'c'],
-        }).addTo(mapInstance);
-      }
-    });
-    tileLayer.on('tileload', () => {
-      consecutiveErrors = 0;
-    });
-
-    // Map Events
     mapInstance.on('click', (e) => onMapClickRef.current?.(e.latlng));
     mapInstance.on('mousemove', (e) => onMapMouseMoveRef.current?.(e.latlng));
     mapInstance.on('dblclick', (e) => onMapDoubleClickRef.current?.(e.latlng));
 
-    // Resize Observer for dynamic layout changes
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => {
-        mapInstance.invalidateSize();
-      });
-      resizeObserver.observe(containerRef.current);
-    }
-
+    mapRef.current = mapInstance;
     setMap(mapInstance);
 
     return () => {
-      if (resizeObserver) resizeObserver.disconnect();
       mapInstance.remove();
+      mapRef.current = null;
     };
-  }, [center, fallbackTileUrl, tileUrl, zoom]);
+    // Intentionally once-only: view changes are handled below, and tile
+    // URLs are fixed for the life of the map.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Move the existing map instead of recreating it when the view changes.
+  useEffect(() => {
+    const mapInstance = mapRef.current;
+    if (!mapInstance) return;
+    const current = mapInstance.getCenter();
+    const currentZoom = mapInstance.getZoom();
+    if (
+      Math.abs(current.lat - center[0]) > 0.000001 ||
+      Math.abs(current.lng - center[1]) > 0.000001 ||
+      currentZoom !== zoom
+    ) {
+      mapInstance.setView(center, zoom);
+    }
+  }, [center, zoom]);
+
+  // Resize handling: only invalidate when the container size actually
+  // changed, throttled to one animation frame. The old code called
+  // invalidateSize() on every ResizeObserver notification, and Leaflet's
+  // own layout work can trigger the observer again — a feedback loop that
+  // made the map stutter while the page was resizing or scrolling.
+  useEffect(() => {
+    const mapInstance = mapRef.current;
+    const container = containerRef.current;
+    if (!mapInstance || !container || typeof ResizeObserver === 'undefined') return;
+    let lastWidth = container.clientWidth;
+    let lastHeight = container.clientHeight;
+    let raf = 0;
+    const observer = new ResizeObserver(() => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        if (w !== lastWidth || h !== lastHeight) {
+          lastWidth = w;
+          lastHeight = h;
+          mapInstance.invalidateSize();
+        }
+      });
+    });
+    observer.observe(container);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
+  }, [map]);
 
   return (
     <div

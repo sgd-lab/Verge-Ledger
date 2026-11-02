@@ -11,9 +11,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./indicators.json": "./indicators.json",
-    "./regimes.json": "./regimes.json",
-    "./councils.json": "./councils.json"
+    "./indicators.json": "./indicators.json"
   },
   "scripts": {
     "build": "tsc --build",

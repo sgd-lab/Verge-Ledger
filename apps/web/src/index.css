@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Leaflet panes sit above page content by default (z-index up to 1000),
+   which let the map cover the sticky header while scrolling. Keep the map
+   below the header and its own drawing toolbar. */
+.leaflet-container {
+  z-index: 1;
+}
+
 @layer base {
   :focus-visible {
     outline: 2px solid #047857;

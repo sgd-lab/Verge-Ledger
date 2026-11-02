@@ -13,16 +13,25 @@ export const GpsMarker: React.FC<GpsMarkerProps> = ({ position, accuracy }) => {
   const markerRef = useRef<L.Marker | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
 
+  // Update the marker in place. The old version removed and recreated the
+  // marker and circle in the effect cleanup on every position/accuracy
+  // update, so a moving GPS fix flickered and re-added layers constantly.
   useEffect(() => {
-    if (!map || !position) {
-      if (markerRef.current) map?.removeLayer(markerRef.current);
-      if (circleRef.current) map?.removeLayer(circleRef.current);
+    if (!map) return;
+    if (!position) {
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+      if (circleRef.current) {
+        map.removeLayer(circleRef.current);
+        circleRef.current = null;
+      }
       return;
     }
 
     const [lat, lng] = position;
 
-    // Pulse DivIcon
     const pulseIcon = L.divIcon({
       className: 'gps-pulse-marker',
       html: `
@@ -39,6 +48,7 @@ export const GpsMarker: React.FC<GpsMarkerProps> = ({ position, accuracy }) => {
       markerRef.current = L.marker([lat, lng], { icon: pulseIcon }).addTo(map);
     } else {
       markerRef.current.setLatLng([lat, lng]);
+      markerRef.current.setIcon(pulseIcon);
     }
 
     if (accuracy) {
@@ -57,13 +67,8 @@ export const GpsMarker: React.FC<GpsMarkerProps> = ({ position, accuracy }) => {
         circleRef.current.setRadius(accuracy);
       }
     }
-
-    return () => {
-      if (markerRef.current) map.removeLayer(markerRef.current);
-      if (circleRef.current) map.removeLayer(circleRef.current);
-      markerRef.current = null;
-      circleRef.current = null;
-    };
+    // No per-update cleanup: layers are only removed when the position
+    // becomes null, or when the map unmounts (Leaflet removes its layers).
   }, [map, position, accuracy]);
 
   const handleCenter = () => {

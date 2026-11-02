@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { Sprout, Menu, X, ShieldAlert } from 'lucide-react';
-import { Badge } from '../components/ui/Badge';
+import { SyncStatusBadge } from '../components/SyncStatusBadge';
+import { useSyncStatus } from '../hooks/useSyncStatus';
 import { cn } from '../lib/utils';
 
 export function RootLayout(): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isDemo = false;
+  // The header previously hard-coded "Local Only" even if a workspace ever
+  // enabled sync. Use the real (currently local-only) status instead.
+  const syncStatus = useSyncStatus();
 
   const navLinks = [
     { to: '/', label: 'Overview' },
@@ -90,7 +94,11 @@ export function RootLayout(): React.ReactElement {
 
             {/* Sync Status Badge & Mobile Menu Button */}
             <div className="flex items-center gap-2">
-              <Badge variant="status-local" className="hidden sm:inline-flex" />
+              <SyncStatusBadge
+                state={syncStatus.state}
+                lastSyncedAt={syncStatus.lastSyncedAt}
+                className="hidden sm:inline-flex"
+              />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -132,7 +140,7 @@ export function RootLayout(): React.ReactElement {
               </NavLink>
             ))}
             <div className="pt-2 border-t border-slate-100">
-              <Badge variant="status-local" />
+              <SyncStatusBadge state={syncStatus.state} lastSyncedAt={syncStatus.lastSyncedAt} />
             </div>
           </nav>
         )}
