@@ -12,25 +12,34 @@ sets `VITE_API_URL` to an empty string, which puts the app in local-only
 mode: all surveys, workspaces and council facts live in the visitor's
 own browser (IndexedDB) and nothing is sent anywhere.
 
-## SPA fallback — now in the workflow
+## Why no workflow change is needed: hash routing + relative base
 
-Verge Ledger is a single-page app with client-side routes (`/survey`,
-`/advisor`, `/simulator`, `/councils`, `/export`, `/workspaces`,
-`/impact`). GitHub Pages serves static files only, so the Pages
-workflow now copies `apps/web/dist/index.html` to
-`apps/web/dist/404.html` before upload. GitHub Pages serves `404.html`
-for unknown paths, and the router then renders the requested route.
-The copy is regenerated on every build because asset hashes change.
+Verge Ledger is a single-page app with client-side routes (Survey,
+Advisor, Simulator, Councils, Export, Workspaces, Impact). GitHub
+Pages serves static files only, so a normal browser-router deep link
+such as `/Verge-Ledger/survey` would 404 on a direct visit or refresh
+unless the workflow were edited to copy `index.html` to `404.html`.
+Workflow files cannot be edited through this repo's GitHub App
+connection (403: the installation lacks the Workflows permission),
+and editing them by hand is not required, because the app avoids the
+problem entirely:
 
-## Base path and router
+- **Hash routing** (`apps/web/src/App.tsx` uses `HashRouter`):
+  routes live after `#`, e.g. `https://sgd-lab.github.io/Verge-Ledger/#/survey`.
+  The server only ever sees `index.html`, so no 404 fallback is
+  needed and the workflow on GitHub — which has no 404 step — deploys
+  a working demo as-is.
+- **Relative base** (`apps/web/vite.config.ts`, `base: './'`):
+  assets and the PWA manifest (`start_url`, `scope`, icon) are
+  relative, so the same build works at the domain root, at the
+  project subpath `/Verge-Ledger/`, or in a local preview, with no
+  build-time base to set.
 
-The site lives at `https://sgd-lab.github.io/Verge-Ledger/` (a project
-Pages site, not the domain root). The workflow therefore builds with
-`VITE_PAGES_BASE='/Verge-Ledger/'`: Vite prefixes assets, the PWA
-manifest (`start_url`, `scope`, icon) and the router basename
-(`apps/web/src/App.tsx`, from `import.meta.env.BASE_URL`) all use
-that base. Local dev and normal builds keep base `/` and are
-unaffected.
+Trade-off: demo URLs carry a `#` (`/#/survey` instead of
+`/survey`). If the workflow is ever edited by hand to add the 404
+fallback, the app can be reverted to `BrowserRouter` with a
+`/Verge-Ledger/` basename and an absolute base — but that is
+optional, not a blocker.
 
 ## Local-only build (reproduce it by hand)
 
@@ -91,6 +100,8 @@ on by a repo admin, and on a Free plan the repo must be public:
    Source: **GitHub Actions**. After that, every push to `main` runs
    the workflow above and deploys automatically. The live URL is
    `https://sgd-lab.github.io/Verge-Ledger/`.
-3. **Verify live:** open the URL, then a deep link such as
-   `https://sgd-lab.github.io/Verge-Ledger/survey` (the 404 fallback
-   should render the Survey page, not a GitHub 404).
+3. **Verify live:** open the URL, then a hash deep link such as
+   `https://sgd-lab.github.io/Verge-Ledger/#/survey` — it should
+   render the Survey page, not a GitHub 404. A plain
+   `/Verge-Ledger/survey` (no `#`) will still 404 by design, since
+   there is no 404 fallback; share only `#/` links.

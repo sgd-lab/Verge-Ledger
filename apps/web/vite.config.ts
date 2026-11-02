@@ -3,11 +3,12 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
 
-// GitHub Pages serves this app from a project subpath, not the domain
-// root: https://sgd-lab.github.io/Verge-Ledger/. The Pages workflow sets
-// VITE_PAGES_BASE=/Verge-Ledger/ for that build only; local dev and
-// normal builds keep the default base '/'.
-const pagesBase = process.env.VITE_PAGES_BASE ?? '/';
+// Relative base so the built app works at any path — domain root,
+// a GitHub Pages project subpath (/Verge-Ledger/), or a preview
+// server — without needing a workflow change to set a base.
+// Trade-off, documented in deploy/github-pages.md: this pairs with
+// HashRouter in App.tsx, so routes live after '#'.
+const pagesBase = process.env.VITE_PAGES_BASE ?? './';
 
 export default defineConfig({
   base: pagesBase,

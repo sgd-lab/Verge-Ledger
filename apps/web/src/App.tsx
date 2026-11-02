@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { RootLayout } from './layouts/RootLayout';
 
 // Code-split every page route (RootLayout stays eager: it is the shell).
@@ -30,17 +30,19 @@ const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
 );
 
-// On GitHub Pages the app lives under /Verge-Ledger/, so the router
-// needs that basename there. Vite sets BASE_URL from the build base:
-// '/' locally, '/Verge-Ledger/' for the Pages build.
-const routerBasename =
-  import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/'
-    ? import.meta.env.BASE_URL.replace(/\/$/, '')
-    : undefined;
-
+// HashRouter, deliberately: GitHub Pages serves static files only, so
+// a BrowserRouter deep link (/survey) would 404 on a direct visit or
+// refresh unless the workflow is edited to add a 404.html fallback —
+// and workflow files cannot be edited through this repo's GitHub App
+// connection. With a hash, the route lives after '#', the server only
+// ever sees index.html, and the existing Pages workflow deploys a
+// working demo with no workflow change. Trade-off: URLs look like
+// /#/survey instead of /survey. If the workflow is ever edited to add
+// the 404 fallback, this can be reverted to BrowserRouter with a
+// '/Verge-Ledger/' basename.
 export function App(): React.ReactElement {
   return (
-    <BrowserRouter basename={routerBasename}>
+    <HashRouter>
       <Suspense fallback={<p className="p-6 text-sm text-slate-600">Loading…</p>}>
         <Routes>
           <Route path="/" element={<RootLayout />}>
@@ -56,6 +58,6 @@ export function App(): React.ReactElement {
           </Route>
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

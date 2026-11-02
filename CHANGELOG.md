@@ -111,6 +111,7 @@ No v0.1.0 git tag exists yet — creating it is an owner action
 ## [Unreleased] — GitHub Pages demo setup 2026-11-02
 
 - Pages build fixed for the project subpath: workflow builds with `VITE_PAGES_BASE='/Verge-Ledger/'`, Vite base + PWA manifest + router basename all use it, `404.html` SPA fallback is copied in the workflow (OQ-10 code fix), and `.nojekyll` is shipped via `apps/web/public/`.
+- Workaround for the workflow-file block (GitHub App lacks Workflows permission, and Copilot's free limit was hit): the app now uses `HashRouter` and a relative Vite base (`'./'`), so the existing workflow on GitHub deploys a working demo with no workflow edit and no 404 step. Demo deep links use `#/`, e.g. `/#/survey`. The workflow edit is now optional, not a blocker.
 - README now links the live demo `https://sgd-lab.github.io/Verge-Ledger/` (goes live once Pages is enabled in repo Settings — see `deploy/github-pages.md`).
 - Still manual, repo cannot do it: make the repo public on a Free plan and set Settings > Pages > Source to GitHub Actions.
 
