@@ -30,9 +30,17 @@ const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
 );
 
+// On GitHub Pages the app lives under /Verge-Ledger/, so the router
+// needs that basename there. Vite sets BASE_URL from the build base:
+// '/' locally, '/Verge-Ledger/' for the Pages build.
+const routerBasename =
+  import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/'
+    ? import.meta.env.BASE_URL.replace(/\/$/, '')
+    : undefined;
+
 export function App(): React.ReactElement {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <Suspense fallback={<p className="p-6 text-sm text-slate-600">Loading…</p>}>
         <Routes>
           <Route path="/" element={<RootLayout />}>

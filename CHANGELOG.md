@@ -108,6 +108,12 @@ No v0.1.0 git tag exists yet — creating it is an owner action
 - The v0.1.0 tag is not created (OQ-11).
 
 ## [Unreleased]
+## [Unreleased] — GitHub Pages demo setup 2026-11-02
+
+- Pages build fixed for the project subpath: workflow builds with `VITE_PAGES_BASE='/Verge-Ledger/'`, Vite base + PWA manifest + router basename all use it, `404.html` SPA fallback is copied in the workflow (OQ-10 code fix), and `.nojekyll` is shipped via `apps/web/public/`.
+- README now links the live demo `https://sgd-lab.github.io/Verge-Ledger/` (goes live once Pages is enabled in repo Settings — see `deploy/github-pages.md`).
+- Still manual, repo cannot do it: make the repo public on a Free plan and set Settings > Pages > Source to GitHub Actions.
+
 ## [Unreleased] — docs cleanup 2026-11-02
 
 - Kept only the docs actually needed: `README.md`, `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `LICENSE`, `docs/02-architecture.md`, `docs/03-method-and-rules.md`, `docs/DATA.md`, `docs/DECISIONS.md`, `docs/OPEN-QUESTIONS.md`, `docs/PRIVACY.md`, `docs/ACCESSIBILITY.md`, `deploy/github-pages.md`, `deploy/static-hosting.md`.

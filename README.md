@@ -8,8 +8,10 @@
 [![License: MIT](https://img.shields.io/badge/code-MIT-52b788.svg?style=flat-square)](LICENSE)
 [![Data: CC BY 4.0](https://img.shields.io/badge/data_%26_docs-CC_BY_4.0-74c69d.svg?style=flat-square)](#licence--attribution)
 
-[Documentation](docs/) · [Methodology & Heuristics](docs/03-method-and-rules.md) · [Data & Citations](docs/DATA.md) · [Report an Issue](../../issues)
+[Live demo](https://sgd-lab.github.io/Verge-Ledger/) · [Documentation](docs/) · [Methodology & Heuristics](docs/03-method-and-rules.md) · [Data & Citations](docs/DATA.md) · [Report an Issue](../../issues)
 
+> **Live demo:** https://sgd-lab.github.io/Verge-Ledger/ — GitHub Pages, local-only mode (no API, no accounts). The demo goes live once Pages is enabled in the repo Settings (see `deploy/github-pages.md`).
+>
 > **Status (`v0.1.0`):** Full offline-first progressive web application and domain toolkit. The `verge-triage-v1` scoring heuristics act as a rapid volunteer triage aid and await formal calibration by a reviewing ecologist.
 
 ---

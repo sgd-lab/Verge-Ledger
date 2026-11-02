@@ -12,31 +12,25 @@ sets `VITE_API_URL` to an empty string, which puts the app in local-only
 mode: all surveys, workspaces and council facts live in the visitor's
 own browser (IndexedDB) and nothing is sent anywhere.
 
-## SPA fallback
+## SPA fallback — now in the workflow
 
 Verge Ledger is a single-page app with client-side routes (`/survey`,
 `/advisor`, `/simulator`, `/councils`, `/export`, `/workspaces`,
-`/impact`). GitHub Pages serves static files only: a direct visit or
-refresh on `/survey` would 404 unless the host returns `index.html`
-for unknown paths.
+`/impact`). GitHub Pages serves static files only, so the Pages
+workflow now copies `apps/web/dist/index.html` to
+`apps/web/dist/404.html` before upload. GitHub Pages serves `404.html`
+for unknown paths, and the router then renders the requested route.
+The copy is regenerated on every build because asset hashes change.
 
-The existing workflow does **not** add a fallback file. Before relying
-on deep links, add one of these to the deployed artifact (both are
-repo-side, static, and free):
+## Base path and router
 
-1. **Preferred, no workflow change:** add a `404.html` that is a copy
-   of the built `index.html` (same directory as `index.html` in
-   `apps/web/dist`). GitHub Pages serves `404.html` for unknown paths,
-   and the router then renders the requested route. The copy must be
-   regenerated on every build because asset hashes change.
-2. **Alternative:** add a build step to the Pages workflow that copies
-   `apps/web/dist/index.html` to `apps/web/dist/404.html` before the
-   upload-pages-artifact step, e.g.
-   `cp apps/web/dist/index.html apps/web/dist/404.html`.
-
-Until one of these is in place, share only the site root URL; in-app
-navigation works, but a bookmarked or refreshed deep link may 404.
-This is a known gap, not a code bug — see `docs/OPEN-QUESTIONS.md` (OQ-10).
+The site lives at `https://sgd-lab.github.io/Verge-Ledger/` (a project
+Pages site, not the domain root). The workflow therefore builds with
+`VITE_PAGES_BASE='/Verge-Ledger/'`: Vite prefixes assets, the PWA
+manifest (`start_url`, `scope`, icon) and the router basename
+(`apps/web/src/App.tsx`, from `import.meta.env.BASE_URL`) all use
+that base. Local dev and normal builds keep base `/` and are
+unaffected.
 
 ## Local-only build (reproduce it by hand)
 
@@ -80,3 +74,23 @@ question in `docs/OPEN-QUESTIONS.md` (OQ-1) before any public launch.
 - No ecologist review, pilot data, or council facts are included:
   the council registry starts empty and demo data is only loaded when
   a visitor presses "Load demo workspace".
+
+
+## Manual steps the repo cannot do for you
+
+The workflow above is ready, but GitHub Pages itself must be switched
+on by a repo admin, and on a Free plan the repo must be public:
+
+1. **Repo visibility (Free plan only):** GitHub Pages cannot publish
+   from a private repo on a Free plan — it needs Pro/Team or a public
+   repo. If the account is on Free, make the repo public first
+   (Settings > Danger Zone > Change visibility). The published site
+   is public either way; making the repo public also makes the source
+   public, so check nothing private is in it first.
+2. **Enable Pages:** Settings > Pages > Build and deployment >
+   Source: **GitHub Actions**. After that, every push to `main` runs
+   the workflow above and deploys automatically. The live URL is
+   `https://sgd-lab.github.io/Verge-Ledger/`.
+3. **Verify live:** open the URL, then a deep link such as
+   `https://sgd-lab.github.io/Verge-Ledger/survey` (the 404 fallback
+   should render the Survey page, not a GitHub 404).

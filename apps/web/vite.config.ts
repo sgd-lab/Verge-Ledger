@@ -3,7 +3,14 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
 
+// GitHub Pages serves this app from a project subpath, not the domain
+// root: https://sgd-lab.github.io/Verge-Ledger/. The Pages workflow sets
+// VITE_PAGES_BASE=/Verge-Ledger/ for that build only; local dev and
+// normal builds keep the default base '/'.
+const pagesBase = process.env.VITE_PAGES_BASE ?? '/';
+
 export default defineConfig({
+  base: pagesBase,
   plugins: [
     react(),
     VitePWA({
@@ -37,11 +44,11 @@ export default defineConfig({
         theme_color: '#065f46',
         background_color: '#f8fafc',
         display: 'standalone',
-        start_url: '/',
-        scope: '/',
+        start_url: pagesBase,
+        scope: pagesBase,
         icons: [
           {
-            src: '/favicon.svg',
+            src: `${pagesBase}favicon.svg`,
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any',
