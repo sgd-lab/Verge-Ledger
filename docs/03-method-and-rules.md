@@ -216,7 +216,7 @@ The agent must compute exact numbers with the code and make sure the table value
 1. Record 20 to 30 real segments with known characteristics.
 2. Ask one ecologist or Wildlife Trust volunteer to rate each as ordinary, promising, or worth a visit.
 3. Compare. Adjust thresholds or weights in data, bump the version string, add a changelog entry.
-4. Publish the comparison in docs/METHOD.md.
+4. Publish the comparison in docs/DECISIONS.md.
 
 ## 11\. Source list (re-read and cite)
 

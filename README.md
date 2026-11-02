@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/code-MIT-52b788.svg?style=flat-square)](LICENSE)
 [![Data: CC BY 4.0](https://img.shields.io/badge/data_%26_docs-CC_BY_4.0-74c69d.svg?style=flat-square)](#licence--attribution)
 
-[Documentation](docs/) · [Methodology & Heuristics](docs/METHOD.md) · [Data & Citations](docs/DATA.md) · [Report an Issue](../../issues)
+[Documentation](docs/) · [Methodology & Heuristics](docs/03-method-and-rules.md) · [Data & Citations](docs/DATA.md) · [Report an Issue](../../issues)
 
 > **Status (`v0.1.0`):** Full offline-first progressive web application and domain toolkit. The `verge-triage-v1` scoring heuristics act as a rapid volunteer triage aid and await formal calibration by a reviewing ecologist.
 
@@ -126,14 +126,14 @@ verge-ledger/
 │   └── api/          # Optional Fastify service for workspace sync & public impact counters (in-memory store in this build; SQLite planned)
 ├── e2e/              # Playwright cross-browser, offline, and axe-core accessibility test suite
 ├── deploy/           # GitHub Pages and static-host deploy guides
-└── docs/             # Specification pack, ADRs (DECISIONS.md),METHOD.md, DATA.md, PRIVACY.md
+└── docs/             # Method and rules, architecture, ADRs (DECISIONS.md), DATA.md, PRIVACY.md
 ```
 
 ### Architectural Invariants
 
 1. **Zero-Dependency Domain Core (`@verge-ledger/core`):** Contains zero DOM, Node, database, or network dependencies. All inputs and outputs are strictly validated via `zod` schemas. It executes identically inside a browser web worker, React component, Fastify route, or Vitest runner.
 2. **Offline-First Storage & ULID Identity:** The primary system of record is client-side IndexedDB managed via `Dexie` (`VergeLedgerDB`). All entities (`workspaces`, `segments`, `observations`, `photos`) use client-generated 26-character Crockford base32 ULIDs, guaranteeing zero ID collisions during offline creation or multi-device sync.
-3. **Cryptographic Workspace Sync (Optional API):** The web app functions $100\%$ standalone when `VITE_API_URL` is unset. When connected to `@verge-ledger/api` (Fastify; in-memory store in this build, SQLite planned — see docs/HANDOFF.md and OQ-8), workspaces authenticate using a 128-bit base32 edit key hashed server-side via `scrypt` with per-key salts and verified via constant-time comparison. Sync uses cursor-based push/pull (`lastSyncedAt`) with per-record last-write-wins (`updatedAt`) and tombstone propagation (`deletedAt`).
+3. **Cryptographic Workspace Sync (Optional API):** The web app functions $100\%$ standalone when `VITE_API_URL` is unset. When connected to `@verge-ledger/api` (Fastify; in-memory store in this build, SQLite planned — see docs/OPEN-QUESTIONS.md OQ-8), workspaces authenticate using a 128-bit base32 edit key hashed server-side via `scrypt` with per-key salts and verified via constant-time comparison. Sync uses cursor-based push/pull (`lastSyncedAt`) with per-record last-write-wins (`updatedAt`) and tombstone propagation (`deletedAt`).
 4. **Conservation & Privacy Guards in Export Pipeline:**
    * **EXIF Stripping:** Local photos never leave the device during sync and have all EXIF metadata stripped on capture/export.
    * **Sensitive Taxa Coarsening:** When exporting public `GeoJSON` (RFC 7946) or `CSV` (RFC 4180), any observation containing a species flagged `sensitive: true` (such as orchids) automatically has its coordinates coarsened to a $1\text{ km}$ grid resolution.
@@ -215,7 +215,7 @@ Verge Ledger enforces strict operational and ethical guardrails both in document
 
 Contributions are welcome, particularly from ecologists, county flora recorders, parish clerks, and developers:
 
-1. **Ecological Calibration & Species Review:** Help review the provisional weights in `packages/data/indicators.json` and threshold boundaries in [`docs/METHOD.md`](docs/METHOD.md).
+1. **Ecological Calibration & Species Review:** Help review the provisional weights in `packages/data/indicators.json` and threshold boundaries in [`docs/03-method-and-rules.md`](docs/03-method-and-rules.md).
 2. **Council Registry Facts:** Submit verified highway authority cutting schedules or FOI responses with primary source links using our GitHub Issue templates.
 3. **Code & Accessibility Improvements:** Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`AGENTS.md`](AGENTS.md) before opening a pull request. All commits follow the Conventional Commits specification.
 
@@ -225,5 +225,5 @@ Contributions are welcome, particularly from ecologists, county flora recorders,
 
 * **Source Code:** Released under the [MIT License](LICENSE).
 * **Documentation & Original Datasets:** Released under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Third-party citations retain their original licences as documented in [`docs/DATA.md`](docs/DATA.md).
-* **Transparency Note:** Developed and maintained with AI coding assistance under strict human architectural specification, automated test verification, and source-citation enforcement. See [`docs/HANDOFF.md`](docs/HANDOFF.md) for verification status.
+* **Transparency Note:** Developed and maintained with AI coding assistance under strict human architectural specification, automated test verification, and source-citation enforcement. See [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md) and [`CHANGELOG.md`](CHANGELOG.md) for verification status and open items.
 * **Acknowledgements:** Methodological rules and cut-timing regimes draw on published guidance from **Plantlife**, **The Wildlife Trusts**, **Lincolnshire Wildlife Trust**, and **Norfolk Wildlife Trust**. Verge Ledger is an independent open-source project and is not affiliated with or endorsed by these organisations.

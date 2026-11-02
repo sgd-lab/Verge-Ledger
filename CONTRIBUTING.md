@@ -52,7 +52,7 @@ Examples:
 
 - Keep pull requests focused on a single change.
 - Include unit, component, or integration tests.
-- Reference requirement IDs from `docs/01-prd.md` (e.g. `SUR-1`, `ADV-2`) where applicable.
+- Reference the relevant feature area (e.g. survey, advisor) where applicable.
 - Update documentation in `docs/` if behavior changes.
 - Ensure all CI checks pass.
 

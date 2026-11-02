@@ -4,7 +4,7 @@ Describe the goal and technical changes introduced in this pull request.
 
 ## Requirement IDs Addressed
 
-List the requirement IDs from `docs/01-prd.md` implemented or tested (e.g., `SUR-1`, `SCO-2`, `ADV-4`, `REQ-1`, `DEM-1`):
+List the feature areas implemented or tested (e.g., survey, scoring, advisor, simulator, export, registry):
 -
 
 ## Verification & Tests Added
@@ -18,7 +18,7 @@ Describe the automated tests added or updated:
 
 ## Documentation
 
-- [ ] Updated relevant documentation in `docs/` (`DATA.md`, `METHOD.md`, `PRIVACY.md`, etc.)
+- [ ] Updated relevant documentation in `docs/` (`DATA.md`, `03-method-and-rules.md`, `PRIVACY.md`, etc.)
 - [ ] Documented any architectural decisions in `docs/DECISIONS.md`
 
 ## Quality Checklist

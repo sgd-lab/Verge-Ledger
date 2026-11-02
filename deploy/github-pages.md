@@ -36,7 +36,7 @@ repo-side, static, and free):
 
 Until one of these is in place, share only the site root URL; in-app
 navigation works, but a bookmarked or refreshed deep link may 404.
-This is a known gap, not a code bug — see `docs/HANDOFF.md`.
+This is a known gap, not a code bug — see `docs/OPEN-QUESTIONS.md` (OQ-10).
 
 ## Local-only build (reproduce it by hand)
 

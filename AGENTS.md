@@ -4,14 +4,13 @@ Guidance for AI coding agents and human contributors working on Verge Ledger.
 
 ## Mission
 
-Build and maintain an open-source, offline-first toolkit that helps parish councils and volunteers in England gather evidence about road verges and make better cut-timing decisions. Read docs/01-prd.md, docs/02-architecture.md and docs/03-method-and-rules.md before changing code.
+Build and maintain an open-source, offline-first toolkit that helps parish councils and volunteers in England gather evidence about road verges and make better cut-timing decisions. Read docs/02-architecture.md and docs/03-method-and-rules.md before changing code.
 
 ## Source of truth order
 
 1. docs/03-method-and-rules.md for scoring, advice, simulator and request text
-2. docs/01-prd.md for scope and acceptance criteria
-3. docs/02-architecture.md for technical decisions
-4. This file for process
+2. docs/02-architecture.md for technical decisions
+3. This file for process
 
 ## Repository rules
 
@@ -19,7 +18,7 @@ Build and maintain an open-source, offline-first toolkit that helps parish counc
 - TypeScript strict everywhere. No any without a comment explaining why.
 - packages/core has no DOM, Node or network dependencies.
 - All external data lives in packages/data with a JSON schema and a test that validates it.
-- Each requirement ID in docs/01-prd.md has at least one test whose name contains the ID.
+- Each feature area (survey, score, advisor, simulator, export, registry) has at least one test covering it.
 
 ## Commit discipline
 
@@ -99,9 +98,8 @@ Build and maintain an open-source, offline-first toolkit that helps parish counc
 
 ## Definition of done for the project (v0.1.0)
 
-See section 13 of docs/01-prd.md. In addition:
+In addition:
 
-- docs/HANDOFF.md exists and is accurate.
 - docs/OPEN-QUESTIONS.md lists every unverified item.
 - README accurately states what is built, what is demo, and what is not yet reviewed by an ecologist.
 - Git tag v0.1.0 and CHANGELOG entry exist.

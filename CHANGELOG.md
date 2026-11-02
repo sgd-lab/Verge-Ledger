@@ -107,7 +107,13 @@ No v0.1.0 git tag exists yet — creating it is an owner action
   added to the Pages workflow (OQ-10).
 - The v0.1.0 tag is not created (OQ-11).
 
-## [Unreleased] — docs refresh 2026-11-02
+## [Unreleased]
+## [Unreleased] — docs cleanup 2026-11-02
+
+- Kept only the docs actually needed: `README.md`, `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `LICENSE`, `docs/02-architecture.md`, `docs/03-method-and-rules.md`, `docs/DATA.md`, `docs/DECISIONS.md`, `docs/OPEN-QUESTIONS.md`, `docs/PRIVACY.md`, `docs/ACCESSIBILITY.md`, `deploy/github-pages.md`, `deploy/static-hosting.md`.
+- Deleted from the repo: `docs/00-research-brief.md`, `docs/01-prd.md`, `docs/04-agent-master-instructions.md`, `docs/05-commit-plan.md`, `docs/06-repo-launch-files.md`, `docs/METHOD.md`, `docs/HANDOFF.md`, `docs/AGENT_HANDOFF_PLAN.md`. Kept docs were updated so they no longer reference the deleted files; requirement IDs from the old PRD are no longer defined in the repo (test names still carry feature-area names).
+- `docs/OPEN-QUESTIONS.md` OQ-12 marked RESOLVED (orphan files deleted from GitHub).
+ — docs refresh 2026-11-02
 
 - README replaced with the owner's updated README, with factual corrections only: real `sgd-lab/Verge-Ledger` clone URL, WCAG badge as a target (axe run pending), API as in-memory rather than SQLite, data/deploy folders as they actually are, PDF via browser print.
 - `docs/HANDOFF.md` updated with the two GitHub pushes (`93a3a8f…`, `f8256dbe…`) and the pending-deletion list (OQ-12).

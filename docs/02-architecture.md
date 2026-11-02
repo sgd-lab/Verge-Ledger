@@ -1,6 +1,6 @@
 # 02 - Architecture, Data Model and API
 
-Read with 01-prd and 03-method-and-rules.
+Read with 03-method-and-rules.
 
 ## 1\. Design principles
 
@@ -47,18 +47,13 @@ verge-ledger/
     ISSUE_TEMPLATE/
     pull_request_template.md
   docs/
-    00-research-brief.md
-    01-prd.md
     02-architecture.md
     03-method-and-rules.md
-    05-commit-plan.md
-    METHOD.md
     DATA.md
     PRIVACY.md
     ACCESSIBILITY.md
     DECISIONS.md
     OPEN-QUESTIONS.md
-    HANDOFF.md
   packages/
     core/        pure domain logic, schemas, exporters, rules
     data/        JSON data with schemas: indicators, regimes, councils
@@ -198,7 +193,7 @@ State: local component state plus a small store (Zustand or React context). Serv
 | E2E         | Playwright                   | survey to score to pack, offline mode, import and export                         |
 | A11y        | axe-core in Playwright       | no serious or critical violations                                                |
 
-Test names reference requirement IDs from 01-prd (for example SUR-1).
+Test names reference feature areas (for example survey, scoring, advisor, simulator).
 
 ## 11\. CI
 
